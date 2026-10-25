@@ -383,13 +383,17 @@ export default function HomePage() {
               <div className="w-full flex items-center justify-center my-2 pointer-events-none select-none">
                 <div className="relative w-[280px] aspect-[510/690]">
                   <video
-                    src="/hero-mascot.mp4"
                     autoPlay
                     loop
                     muted
                     playsInline
+                    preload="auto"
+                    poster="/hero-gongcha.png"
                     className="w-full h-full object-contain [mix-blend-mode:multiply]"
-                  />
+                  >
+                    <source src="/hero-mascot.webm" type="video/webm" />
+                    <source src="/hero-mascot.mp4" type="video/mp4" />
+                  </video>
                 </div>
               </div>
 
@@ -477,13 +481,17 @@ export default function HomePage() {
             <div className="w-full flex items-center justify-center my-1 pointer-events-none select-none">
               <div className="relative w-[235px] sm:w-[260px] aspect-[510/690]">
                 <video
-                  src="/hero-mascot.mp4"
                   autoPlay
                   loop
                   muted
                   playsInline
+                  preload="auto"
+                  poster="/hero-gongcha.png"
                   className="w-full h-full object-contain [mix-blend-mode:multiply]"
-                />
+                >
+                  <source src="/hero-mascot.webm" type="video/webm" />
+                  <source src="/hero-mascot.mp4" type="video/mp4" />
+                </video>
               </div>
             </div>
 
