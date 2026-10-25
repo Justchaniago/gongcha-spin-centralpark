@@ -103,7 +103,7 @@ export default function HomePage() {
           <header className="w-full text-center flex flex-col items-center select-none pt-1">
             <div className="relative w-[36px] h-[48px] mb-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.06)]">
               <Image
-                src="/Gong_Cha_logo.svg.png"
+                src="/gongcha-logo.png"
                 alt="Gong Cha Official Logo"
                 fill
                 priority
