@@ -31,6 +31,112 @@ export default function HomePage() {
     null
   );
 
+  const renderRegistrationForm = (buttonText: string) => (
+    <form onSubmit={validateAndSubmit} noValidate className="space-y-4">
+      {/* Full Name */}
+      <div>
+        <label
+          htmlFor="full-name"
+          className="block text-[11px] font-extrabold uppercase tracking-wider text-[#111111] mb-1.5"
+        >
+          Full Name
+        </label>
+        <input
+          id="full-name"
+          type="text"
+          autoComplete="name"
+          placeholder="e.g. Alex Tan"
+          value={name}
+          onChange={(e) => {
+            setName(e.target.value);
+            if (errors.name) setErrors({ ...errors, name: undefined });
+          }}
+          className="w-full px-4 py-3 bg-white rounded-xl border-2 border-[#111111] text-sm font-bold text-[#111111] placeholder:text-[#111111]/35 focus:outline-none focus:ring-2 focus:ring-[#C8202F]"
+        />
+        {errors.name && (
+          <p className="text-[11px] font-bold text-[#C8202F] mt-1">
+            {errors.name}
+          </p>
+        )}
+      </div>
+
+      {/* WhatsApp Number */}
+      <div>
+        <label
+          htmlFor="whatsapp"
+          className="block text-[11px] font-extrabold uppercase tracking-wider text-[#111111] mb-1.5"
+        >
+          WhatsApp Number
+        </label>
+        <input
+          id="whatsapp"
+          type="tel"
+          inputMode="tel"
+          autoComplete="tel"
+          placeholder="e.g. 081234567890"
+          value={whatsapp}
+          onChange={(e) => {
+            setWhatsapp(e.target.value);
+            if (errors.whatsapp)
+              setErrors({ ...errors, whatsapp: undefined });
+          }}
+          className="w-full px-4 py-3 bg-white rounded-xl border-2 border-[#111111] text-sm font-bold text-[#111111] placeholder:text-[#111111]/35 focus:outline-none focus:ring-2 focus:ring-[#C8202F]"
+        />
+        {errors.whatsapp && (
+          <p className="text-[11px] font-bold text-[#C8202F] mt-1">
+            {errors.whatsapp}
+          </p>
+        )}
+      </div>
+
+      {/* Email Address */}
+      <div>
+        <label
+          htmlFor="email"
+          className="block text-[11px] font-extrabold uppercase tracking-wider text-[#111111] mb-1.5"
+        >
+          Email Address
+        </label>
+        <input
+          id="email"
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          placeholder="e.g. alex@email.com"
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            if (errors.email) setErrors({ ...errors, email: undefined });
+          }}
+          className="w-full px-4 py-3 bg-white rounded-xl border-2 border-[#111111] text-sm font-bold text-[#111111] placeholder:text-[#111111]/35 focus:outline-none focus:ring-2 focus:ring-[#C8202F]"
+        />
+        {errors.email && (
+          <p className="text-[11px] font-bold text-[#C8202F] mt-1">
+            {errors.email}
+          </p>
+        )}
+      </div>
+
+      <p className="text-[11px] font-semibold text-[#111111]/60 pt-0.5">
+        *Limited to 1 spin per WhatsApp number & email address.
+      </p>
+
+      {errors.general && (
+        <div className="p-3 bg-red-100 border-2 border-[#C8202F] text-[#C8202F] rounded-xl text-xs font-bold">
+          {errors.general}
+        </div>
+      )}
+
+      <button
+        type="submit"
+        disabled={isLoading}
+        className="w-full py-4 mt-1 bg-[#C8202F] hover:bg-[#A81926] disabled:opacity-60 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_#111111] text-[#F5F2E8] font-display text-[22px] tracking-[0.06em] uppercase rounded-xl border-[2.5px] border-[#111111] shadow-[4px_4px_0px_#111111] transition-all cursor-pointer"
+      >
+        {isLoading ? "VERIFYING..." : buttonText}
+      </button>
+    </form>
+  );
+
   const validateAndSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: { name?: string; whatsapp?: string; email?: string; general?: string } = {};
@@ -96,103 +202,209 @@ export default function HomePage() {
   };
 
   return (
-    <main className="min-h-dvh w-full bg-[#F5F2E8] flex flex-col items-center justify-between px-5 py-5 sm:py-8 overflow-x-hidden relative">
+    <main className="min-h-dvh w-full bg-[#F5F2E8] flex flex-col items-center justify-between px-5 py-5 sm:py-8 lg:py-10 lg:px-8 overflow-x-hidden relative">
       {step === "landing" ? (
-        <div className="w-full max-w-[380px] flex-1 flex flex-col items-center justify-between relative z-10">
-          {/* 1. Top Header: Logo, Sub-badge & Display Headline */}
-          <header className="w-full text-center flex flex-col items-center select-none pt-1">
-            <div className="relative w-[36px] h-[48px] mb-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.06)]">
-              <Image
-                src="/gongcha-logo.png"
-                alt="Gong Cha Official Logo"
-                fill
-                priority
-                sizes="36px"
-                className="object-contain"
-              />
-            </div>
+        <div className="w-full max-w-[380px] lg:max-w-[960px] flex-1 flex flex-col items-center justify-between relative z-10">
+          
+          {/* DESKTOP & TABLET TWO-COLUMN WRAPPER (Visible on lg: screens) */}
+          <div className="hidden lg:grid lg:grid-cols-12 lg:gap-12 lg:items-center w-full my-auto py-6">
+            
+            {/* Left Column: Brand, Mascot Hero, and Date/Location */}
+            <div className="lg:col-span-7 flex flex-col items-center text-center">
+              <header className="w-full flex flex-col items-center select-none">
+                <div className="relative w-[42px] h-[56px] mb-2.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.06)]">
+                  <Image
+                    src="/gongcha-logo.png"
+                    alt="Gong Cha Official Logo"
+                    fill
+                    priority
+                    sizes="42px"
+                    className="object-contain"
+                  />
+                </div>
 
-            <div className="inline-block px-3 py-0.5 mb-2 bg-[#EDE8D8] border-[1.5px] border-[#111111] rounded-full shadow-[2px_2px_0px_#111111]">
-              <p className="text-[11px] sm:text-[12px] font-extrabold tracking-[0.18em] uppercase text-[#111111]">
-                GONG CHA • <span className="text-[#C8202F]">CENTRAL PARK</span>
-              </p>
-            </div>
-
-            <h1 className="font-display text-[68px] sm:text-[76px] leading-[0.88] tracking-[-0.01em] uppercase text-[#111111]">
-              GRAND
-              <br />
-              OPENING
-            </h1>
-          </header>
-
-          {/* 2. Center Hero Artwork (Rescaled for balanced 1-screen viewport) */}
-          <div className="w-full flex items-center justify-center my-1 pointer-events-none select-none">
-            <div className="relative w-[235px] sm:w-[260px] aspect-[1200/1408]">
-              <Image
-                src="/hero-gongcha.png"
-                alt="Gong Cha Grand Opening Mascots"
-                fill
-                priority
-                sizes="(max-width: 640px) 235px, 260px"
-                className="object-contain drop-shadow-[0_6px_12px_rgba(0,0,0,0.06)]"
-              />
-            </div>
-          </div>
-
-          {/* 3. CTA Action & Event Metadata Footer */}
-          <div className="w-full flex flex-col items-center space-y-4 relative z-20 pb-1">
-            <button
-              type="button"
-              onClick={() => {
-                console.log("Button clicked!");
-                setIsDrawerOpen(true);
-              }}
-              onTouchEnd={(e) => {
-                e.stopPropagation();
-                setIsDrawerOpen(true);
-              }}
-              className="w-full py-3.5 bg-[#C8202F] hover:bg-[#A81926] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_#111111] text-[#F5F2E8] font-display text-[22px] tracking-[0.06em] uppercase rounded-2xl border-[2.5px] border-[#111111] shadow-[4px_4px_0px_#111111] transition-all cursor-pointer touch-manipulation select-none"
-            >
-              GET YOUR VOUCHER
-            </button>
-
-            <footer className="w-full grid grid-cols-2 divide-x-[1.5px] divide-[#111111]/20 border-y-[1.5px] border-[#111111]/20 py-3">
-              <div className="flex items-center justify-center gap-2.5 pr-2">
-                <Calendar className="w-4 h-4 text-[#C8202F] stroke-[2.2] shrink-0" />
-                <div className="text-left">
-                  <p className="text-[9px] font-extrabold tracking-[0.16em] uppercase text-[#111111]/50 leading-none mb-1">
-                    DATE
+                <div className="inline-block px-3.5 py-1 mb-2.5 bg-[#EDE8D8] border-[1.5px] border-[#111111] rounded-full shadow-[2px_2px_0px_#111111]">
+                  <p className="text-[12px] font-extrabold tracking-[0.18em] uppercase text-[#111111]">
+                    GONG CHA • <span className="text-[#C8202F]">CENTRAL PARK</span>
                   </p>
-                  <p className="font-display text-[19px] leading-none tracking-[0.02em] text-[#111111] uppercase">
-                    3 NOV 2026
-                  </p>
+                </div>
+
+                <h1 className="font-display text-[78px] leading-[0.88] tracking-[-0.01em] uppercase text-[#111111]">
+                  GRAND
+                  <br />
+                  OPENING
+                </h1>
+              </header>
+
+              {/* Mascot Hero Artwork */}
+              <div className="w-full flex items-center justify-center my-3 pointer-events-none select-none">
+                <div className="relative w-[280px] aspect-[1200/1408]">
+                  <Image
+                    src="/hero-gongcha.png"
+                    alt="Gong Cha Grand Opening Mascots"
+                    fill
+                    priority
+                    sizes="280px"
+                    className="object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.08)]"
+                  />
                 </div>
               </div>
 
-              <div className="flex items-center justify-center gap-2.5 pl-2">
-                <MapPin className="w-4 h-4 text-[#C8202F] stroke-[2.2] shrink-0" />
-                <div className="text-left">
-                  <p className="text-[9px] font-extrabold tracking-[0.16em] uppercase text-[#111111]/50 leading-none mb-1">
-                    LOCATION
-                  </p>
-                  <p className="font-display text-[19px] leading-none tracking-[0.02em] text-[#111111] uppercase">
-                    UG FLOOR
-                  </p>
+              {/* Event Metadata (Date & Location) */}
+              <div className="w-full max-w-[360px] grid grid-cols-2 divide-x-[1.5px] divide-[#111111]/20 border-y-[1.5px] border-[#111111]/20 py-3 mt-1">
+                <div className="flex items-center justify-center gap-2.5 pr-2">
+                  <Calendar className="w-4 h-4 text-[#C8202F] stroke-[2.2] shrink-0" />
+                  <div className="text-left">
+                    <p className="text-[9px] font-extrabold tracking-[0.16em] uppercase text-[#111111]/50 leading-none mb-1">
+                      DATE
+                    </p>
+                    <p className="font-display text-[19px] leading-none tracking-[0.02em] text-[#111111] uppercase">
+                      3 NOV 2026
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-center gap-2.5 pl-2">
+                  <MapPin className="w-4 h-4 text-[#C8202F] stroke-[2.2] shrink-0" />
+                  <div className="text-left">
+                    <p className="text-[9px] font-extrabold tracking-[0.16em] uppercase text-[#111111]/50 leading-none mb-1">
+                      LOCATION
+                    </p>
+                    <p className="font-display text-[19px] leading-none tracking-[0.02em] text-[#111111] uppercase">
+                      UG FLOOR
+                    </p>
+                  </div>
                 </div>
               </div>
-            </footer>
+            </div>
+
+            {/* Right Column: Embedded Registration Card */}
+            <div className="lg:col-span-5 w-full flex flex-col items-center">
+              <div className="w-full bg-[#EDE8D8]/80 rounded-[28px] border-[2.5px] border-[#111111] shadow-[6px_6px_0px_#111111] p-7 text-left">
+                <div className="mb-5">
+                  <div className="inline-block px-2.5 py-0.5 bg-[#C8202F]/10 rounded-md border border-[#C8202F]/30 mb-2">
+                    <span className="text-[10px] font-black uppercase tracking-[0.18em] text-[#C8202F]">
+                      STEP 1 OF 2 • GUEST REGISTRATION
+                    </span>
+                  </div>
+                  <h2 className="font-display text-[34px] leading-[0.95] uppercase text-[#111111]">
+                    UNLOCK YOUR SPIN
+                  </h2>
+                  <p className="text-xs font-semibold text-[#111111]/70 mt-1.5 leading-relaxed">
+                    Fill in your details below to spin the wheel and claim your Grand Opening exclusive voucher.
+                  </p>
+                </div>
+
+                {renderRegistrationForm("SPIN THE WHEEL NOW")}
+              </div>
+            </div>
+
           </div>
+
+
+          {/* MOBILE VIEW LAYOUT (Unchanged, 100% strictly preserved on screens < lg) */}
+          <div className="lg:hidden w-full flex-1 flex flex-col items-center justify-between">
+            {/* 1. Top Header: Logo, Sub-badge & Display Headline */}
+            <header className="w-full text-center flex flex-col items-center select-none pt-1">
+              <div className="relative w-[36px] h-[48px] mb-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.06)]">
+                <Image
+                  src="/gongcha-logo.png"
+                  alt="Gong Cha Official Logo"
+                  fill
+                  priority
+                  sizes="36px"
+                  className="object-contain"
+                />
+              </div>
+
+              <div className="inline-block px-3 py-0.5 mb-2 bg-[#EDE8D8] border-[1.5px] border-[#111111] rounded-full shadow-[2px_2px_0px_#111111]">
+                <p className="text-[11px] sm:text-[12px] font-extrabold tracking-[0.18em] uppercase text-[#111111]">
+                  GONG CHA • <span className="text-[#C8202F]">CENTRAL PARK</span>
+                </p>
+              </div>
+
+              <h1 className="font-display text-[68px] sm:text-[76px] leading-[0.88] tracking-[-0.01em] uppercase text-[#111111]">
+                GRAND
+                <br />
+                OPENING
+              </h1>
+            </header>
+
+            {/* 2. Center Hero Artwork */}
+            <div className="w-full flex items-center justify-center my-1 pointer-events-none select-none">
+              <div className="relative w-[235px] sm:w-[260px] aspect-[1200/1408]">
+                <Image
+                  src="/hero-gongcha.png"
+                  alt="Gong Cha Grand Opening Mascots"
+                  fill
+                  priority
+                  sizes="(max-width: 640px) 235px, 260px"
+                  className="object-contain drop-shadow-[0_6px_12px_rgba(0,0,0,0.06)]"
+                />
+              </div>
+            </div>
+
+            {/* 3. CTA Action & Event Metadata Footer */}
+            <div className="w-full flex flex-col items-center space-y-4 relative z-20 pb-1">
+              <button
+                type="button"
+                onClick={() => {
+                  console.log("Button clicked!");
+                  setIsDrawerOpen(true);
+                }}
+                onTouchEnd={(e) => {
+                  e.stopPropagation();
+                  setIsDrawerOpen(true);
+                }}
+                className="w-full py-3.5 bg-[#C8202F] hover:bg-[#A81926] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_#111111] text-[#F5F2E8] font-display text-[22px] tracking-[0.06em] uppercase rounded-2xl border-[2.5px] border-[#111111] shadow-[4px_4px_0px_#111111] transition-all cursor-pointer touch-manipulation select-none"
+              >
+                GET YOUR VOUCHER
+              </button>
+
+              <footer className="w-full grid grid-cols-2 divide-x-[1.5px] divide-[#111111]/20 border-y-[1.5px] border-[#111111]/20 py-3">
+                <div className="flex items-center justify-center gap-2.5 pr-2">
+                  <Calendar className="w-4 h-4 text-[#C8202F] stroke-[2.2] shrink-0" />
+                  <div className="text-left">
+                    <p className="text-[9px] font-extrabold tracking-[0.16em] uppercase text-[#111111]/50 leading-none mb-1">
+                      DATE
+                    </p>
+                    <p className="font-display text-[19px] leading-none tracking-[0.02em] text-[#111111] uppercase">
+                      3 NOV 2026
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-center gap-2.5 pl-2">
+                  <MapPin className="w-4 h-4 text-[#C8202F] stroke-[2.2] shrink-0" />
+                  <div className="text-left">
+                    <p className="text-[9px] font-extrabold tracking-[0.16em] uppercase text-[#111111]/50 leading-none mb-1">
+                      LOCATION
+                    </p>
+                    <p className="font-display text-[19px] leading-none tracking-[0.02em] text-[#111111] uppercase">
+                      UG FLOOR
+                    </p>
+                  </div>
+                </div>
+              </footer>
+            </div>
+          </div>
+
         </div>
       ) : (
         registeredUser && (
-          <SpinWheelView
-            user={registeredUser}
-            onBack={() => setStep("landing")}
-          />
+          <div className="w-full flex-1 flex flex-col items-center justify-center">
+            {/* Modal Dialog container for desktop / full view for mobile */}
+            <div className="w-full max-w-[420px] lg:bg-[#EDE8D8]/90 lg:p-6 lg:rounded-[32px] lg:border-[3px] lg:border-[#111111] lg:shadow-[8px_8px_0px_#111111]">
+              <SpinWheelView
+                user={registeredUser}
+                onBack={() => setStep("landing")}
+              />
+            </div>
+          </div>
         )
       )}
 
-      {/* Smooth Slide-Up Bottom Sheet Modal */}
+      {/* Smooth Slide-Up Bottom Sheet Modal (Mobile only, triggered by Get Your Voucher) */}
       {isDrawerOpen && (
         <div className="fixed inset-0 z-50 flex flex-col justify-end items-center">
           {/* Backdrop */}
@@ -203,138 +415,36 @@ export default function HomePage() {
 
           {/* Sheet Container */}
           <div className="relative w-full max-w-[430px] bg-[#F5F2E8] rounded-t-[28px] border-t-[3px] border-x-[3px] border-[#111111] shadow-[0_-8px_0_#111111] px-6 pt-4 pb-8 z-10 animate-slide-up-sheet">
-          {/* Drag Handle Bar */}
-          <div className="w-12 h-1.5 bg-[#111111]/25 rounded-full mx-auto mb-4" />
+            {/* Drag Handle Bar */}
+            <div className="w-12 h-1.5 bg-[#111111]/25 rounded-full mx-auto mb-4" />
 
-          {/* Close Button */}
-          <button
-            type="button"
-            onClick={() => setIsDrawerOpen(false)}
-            aria-label="Close drawer"
-            className="absolute top-5 right-5 w-8 h-8 rounded-full border-2 border-[#111111] flex items-center justify-center text-[#111111] hover:bg-[#111111] hover:text-[#F5F2E8] transition-colors cursor-pointer"
-          >
-            <X className="w-4 h-4 stroke-[2.5]" />
-          </button>
-
-          {/* Header */}
-          <div className="mb-5">
-            <span className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#C8202F]">
-              STEP 1 OF 2 • GUEST REGISTRATION
-            </span>
-            <h2 className="font-display text-[36px] leading-[0.95] uppercase text-[#111111] mt-1">
-              UNLOCK YOUR SPIN
-            </h2>
-            <p className="text-xs font-semibold text-[#111111]/70 mt-1">
-              Complete your details below to spin the wheel and get your Grand Opening Exclusive Voucher.
-            </p>
-          </div>
-
-          {/* Form */}
-          <form onSubmit={validateAndSubmit} noValidate className="space-y-4">
-            {/* Full Name */}
-            <div>
-              <label
-                htmlFor="full-name"
-                className="block text-[11px] font-extrabold uppercase tracking-wider text-[#111111] mb-1.5"
-              >
-                Full Name
-              </label>
-              <input
-                id="full-name"
-                type="text"
-                autoComplete="name"
-                placeholder="e.g. Alex Tan"
-                value={name}
-                onChange={(e) => {
-                  setName(e.target.value);
-                  if (errors.name) setErrors({ ...errors, name: undefined });
-                }}
-                className="w-full px-4 py-3 bg-white rounded-xl border-2 border-[#111111] text-sm font-bold text-[#111111] placeholder:text-[#111111]/35 focus:outline-none focus:ring-2 focus:ring-[#C8202F]"
-              />
-              {errors.name && (
-                <p className="text-[11px] font-bold text-[#C8202F] mt-1">
-                  {errors.name}
-                </p>
-              )}
-            </div>
-
-            {/* WhatsApp Number */}
-            <div>
-              <label
-                htmlFor="whatsapp"
-                className="block text-[11px] font-extrabold uppercase tracking-wider text-[#111111] mb-1.5"
-              >
-                WhatsApp Number
-              </label>
-              <input
-                id="whatsapp"
-                type="tel"
-                inputMode="tel"
-                autoComplete="tel"
-                placeholder="e.g. 081234567890"
-                value={whatsapp}
-                onChange={(e) => {
-                  setWhatsapp(e.target.value);
-                  if (errors.whatsapp)
-                    setErrors({ ...errors, whatsapp: undefined });
-                }}
-                className="w-full px-4 py-3 bg-white rounded-xl border-2 border-[#111111] text-sm font-bold text-[#111111] placeholder:text-[#111111]/35 focus:outline-none focus:ring-2 focus:ring-[#C8202F]"
-              />
-              {errors.whatsapp && (
-                <p className="text-[11px] font-bold text-[#C8202F] mt-1">
-                  {errors.whatsapp}
-                </p>
-              )}
-            </div>
-
-            {/* Email Address */}
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-[11px] font-extrabold uppercase tracking-wider text-[#111111] mb-1.5"
-              >
-                Email Address
-              </label>
-              <input
-                id="email"
-                type="email"
-                inputMode="email"
-                autoComplete="email"
-                placeholder="e.g. alex@email.com"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  if (errors.email) setErrors({ ...errors, email: undefined });
-                }}
-                className="w-full px-4 py-3 bg-white rounded-xl border-2 border-[#111111] text-sm font-bold text-[#111111] placeholder:text-[#111111]/35 focus:outline-none focus:ring-2 focus:ring-[#C8202F]"
-              />
-              {errors.email && (
-                <p className="text-[11px] font-bold text-[#C8202F] mt-1">
-                  {errors.email}
-                </p>
-              )}
-            </div>
-
-            <p className="text-[11px] font-semibold text-[#111111]/60 pt-0.5">
-              *Limited to 1 spin per WhatsApp number & email address.
-            </p>
-
-            {errors.general && (
-              <div className="p-3 bg-red-100 border-2 border-[#C8202F] text-[#C8202F] rounded-xl text-xs font-bold">
-                {errors.general}
-              </div>
-            )}
-
+            {/* Close Button */}
             <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full py-4 mt-1 bg-[#C8202F] hover:bg-[#A81926] disabled:opacity-60 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_#111111] text-[#F5F2E8] font-display text-[22px] tracking-[0.06em] uppercase rounded-xl border-[2.5px] border-[#111111] shadow-[4px_4px_0px_#111111] transition-all cursor-pointer"
+              type="button"
+              onClick={() => setIsDrawerOpen(false)}
+              aria-label="Close drawer"
+              className="absolute top-5 right-5 w-8 h-8 rounded-full border-2 border-[#111111] flex items-center justify-center text-[#111111] hover:bg-[#111111] hover:text-[#F5F2E8] transition-colors cursor-pointer"
             >
-              {isLoading ? "VERIFYING..." : "CONTINUE TO SPIN WHEEL"}
+              <X className="w-4 h-4 stroke-[2.5]" />
             </button>
-          </form>
+
+            {/* Header */}
+            <div className="mb-5">
+              <span className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#C8202F]">
+                STEP 1 OF 2 • GUEST REGISTRATION
+              </span>
+              <h2 className="font-display text-[36px] leading-[0.95] uppercase text-[#111111] mt-1">
+                UNLOCK YOUR SPIN
+              </h2>
+              <p className="text-xs font-semibold text-[#111111]/70 mt-1">
+                Complete your details below to spin the wheel and get your Grand Opening Exclusive Voucher.
+              </p>
+            </div>
+
+            {/* Form */}
+            {renderRegistrationForm("CONTINUE TO SPIN WHEEL")}
+          </div>
         </div>
-      </div>
       )}
     </main>
   );
