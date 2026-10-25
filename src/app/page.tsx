@@ -96,40 +96,51 @@ export default function HomePage() {
   };
 
   return (
-    <main className="min-h-dvh w-full bg-[#F5F2E8] flex flex-col items-center justify-between px-6 py-7 sm:py-10 overflow-x-hidden relative">
+    <main className="min-h-dvh w-full bg-[#F5F2E8] flex flex-col items-center justify-between px-5 py-5 sm:py-8 overflow-x-hidden relative">
       {step === "landing" ? (
         <div className="w-full max-w-[380px] flex-1 flex flex-col items-center justify-between relative z-10">
-          {/* 1. Top Header & Display Headline */}
-          <header className="w-full text-center flex flex-col items-center select-none">
-            <div className="inline-block px-3.5 py-1 mb-3 bg-[#EDE8D8] border-[1.5px] border-[#111111] rounded-full shadow-[2px_2px_0px_#111111]">
-              <p className="text-[12px] sm:text-[13px] font-extrabold tracking-[0.18em] uppercase text-[#111111]">
+          {/* 1. Top Header: Logo, Sub-badge & Display Headline */}
+          <header className="w-full text-center flex flex-col items-center select-none pt-1">
+            <div className="relative w-[36px] h-[48px] mb-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.06)]">
+              <Image
+                src="/Gong_Cha_logo.svg.png"
+                alt="Gong Cha Official Logo"
+                fill
+                priority
+                sizes="36px"
+                className="object-contain"
+              />
+            </div>
+
+            <div className="inline-block px-3 py-0.5 mb-2 bg-[#EDE8D8] border-[1.5px] border-[#111111] rounded-full shadow-[2px_2px_0px_#111111]">
+              <p className="text-[11px] sm:text-[12px] font-extrabold tracking-[0.18em] uppercase text-[#111111]">
                 GONG CHA • <span className="text-[#C8202F]">CENTRAL PARK</span>
               </p>
             </div>
 
-            <h1 className="font-display text-[76px] sm:text-[84px] leading-[0.88] tracking-[-0.01em] uppercase text-[#111111]">
+            <h1 className="font-display text-[68px] sm:text-[76px] leading-[0.88] tracking-[-0.01em] uppercase text-[#111111]">
               GRAND
               <br />
               OPENING
             </h1>
           </header>
 
-          {/* 2. Center Hero Artwork */}
-          <div className="w-full flex items-center justify-center my-2 pointer-events-none select-none">
-            <div className="relative w-[290px] sm:w-[320px] aspect-[1200/1408]">
+          {/* 2. Center Hero Artwork (Rescaled for balanced 1-screen viewport) */}
+          <div className="w-full flex items-center justify-center my-1 pointer-events-none select-none">
+            <div className="relative w-[235px] sm:w-[260px] aspect-[1200/1408]">
               <Image
                 src="/hero-gongcha.png"
                 alt="Gong Cha Grand Opening Mascots"
                 fill
                 priority
-                sizes="(max-width: 640px) 290px, 320px"
+                sizes="(max-width: 640px) 235px, 260px"
                 className="object-contain drop-shadow-[0_6px_12px_rgba(0,0,0,0.06)]"
               />
             </div>
           </div>
 
           {/* 3. CTA Action & Event Metadata Footer */}
-          <div className="w-full flex flex-col items-center space-y-6 relative z-20">
+          <div className="w-full flex flex-col items-center space-y-4 relative z-20 pb-1">
             <button
               type="button"
               onClick={() => {
@@ -140,7 +151,7 @@ export default function HomePage() {
                 e.stopPropagation();
                 setIsDrawerOpen(true);
               }}
-              className="w-full py-4 bg-[#C8202F] hover:bg-[#A81926] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_#111111] text-[#F5F2E8] font-display text-[24px] tracking-[0.06em] uppercase rounded-2xl border-[2.5px] border-[#111111] shadow-[4px_4px_0px_#111111] transition-all cursor-pointer touch-manipulation select-none"
+              className="w-full py-3.5 bg-[#C8202F] hover:bg-[#A81926] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_#111111] text-[#F5F2E8] font-display text-[22px] tracking-[0.06em] uppercase rounded-2xl border-[2.5px] border-[#111111] shadow-[4px_4px_0px_#111111] transition-all cursor-pointer touch-manipulation select-none"
             >
               GET YOUR VOUCHER
             </button>
