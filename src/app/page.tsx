@@ -379,16 +379,16 @@ export default function HomePage() {
                 </h1>
               </header>
 
-              {/* Mascot Hero Artwork */}
+              {/* Mascot Animated Video Artwork */}
               <div className="w-full flex items-center justify-center my-3 pointer-events-none select-none">
-                <div className="relative w-[280px] aspect-[1200/1408] animate-mascot-float">
-                  <Image
-                    src="/hero-gongcha.png"
-                    alt="Gong Cha Grand Opening Mascots"
-                    fill
-                    priority
-                    sizes="280px"
-                    className="object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.12)]"
+                <div className="relative w-[280px] aspect-[510/600] rounded-2xl overflow-hidden shadow-[4px_4px_0px_#111111] border-[2px] border-[#111111] bg-[#F5F2E8]">
+                  <video
+                    src="/hero-mascot.mp4"
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    className="w-full h-full object-cover"
                   />
                 </div>
               </div>
@@ -473,16 +473,16 @@ export default function HomePage() {
               </h1>
             </header>
 
-            {/* 2. Center Hero Artwork */}
+            {/* 2. Center Animated Mascot Video Artwork */}
             <div className="w-full flex items-center justify-center my-1 pointer-events-none select-none">
-              <div className="relative w-[235px] sm:w-[260px] aspect-[1200/1408] animate-mascot-float">
-                <Image
-                  src="/hero-gongcha.png"
-                  alt="Gong Cha Grand Opening Mascots"
-                  fill
-                  priority
-                  sizes="(max-width: 640px) 235px, 260px"
-                  className="object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.1)]"
+              <div className="relative w-[235px] sm:w-[260px] aspect-[510/600] rounded-2xl overflow-hidden shadow-[4px_4px_0px_#111111] border-[2px] border-[#111111] bg-[#F5F2E8]">
+                <video
+                  src="/hero-mascot.mp4"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover"
                 />
               </div>
             </div>
