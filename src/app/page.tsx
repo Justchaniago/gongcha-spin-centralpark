@@ -101,9 +101,11 @@ export default function HomePage() {
         <div className="w-full max-w-[380px] flex-1 flex flex-col items-center justify-between relative z-10">
           {/* 1. Top Header & Display Headline */}
           <header className="w-full text-center flex flex-col items-center select-none">
-            <p className="font-display text-[26px] sm:text-[28px] leading-none tracking-[0.08em] uppercase text-[#C8202F] mb-2">
-              GONG CHA • CENTRAL PARK
-            </p>
+            <div className="inline-block px-3.5 py-1 mb-3 bg-[#EDE8D8] border-[1.5px] border-[#111111] rounded-full shadow-[2px_2px_0px_#111111]">
+              <p className="text-[12px] sm:text-[13px] font-extrabold tracking-[0.18em] uppercase text-[#111111]">
+                GONG CHA • <span className="text-[#C8202F]">CENTRAL PARK</span>
+              </p>
+            </div>
 
             <h1 className="font-display text-[76px] sm:text-[84px] leading-[0.88] tracking-[-0.01em] uppercase text-[#111111]">
               GRAND
@@ -143,19 +145,29 @@ export default function HomePage() {
               GET YOUR VOUCHER
             </button>
 
-            <footer className="w-full grid grid-cols-2 gap-6 px-4 pt-1">
-              <div className="flex items-center justify-center gap-2.5">
-                <Calendar className="w-6 h-6 text-[#111111] stroke-[2.2] shrink-0" />
-                <p className="font-display text-[24px] leading-none text-[#111111] uppercase">
-                  3 NOV 2026
-                </p>
+            <footer className="w-full grid grid-cols-2 divide-x-[1.5px] divide-[#111111]/20 border-y-[1.5px] border-[#111111]/20 py-3">
+              <div className="flex items-center justify-center gap-2.5 pr-2">
+                <Calendar className="w-4 h-4 text-[#C8202F] stroke-[2.2] shrink-0" />
+                <div className="text-left">
+                  <p className="text-[9px] font-extrabold tracking-[0.16em] uppercase text-[#111111]/50 leading-none mb-1">
+                    DATE
+                  </p>
+                  <p className="font-display text-[19px] leading-none tracking-[0.02em] text-[#111111] uppercase">
+                    3 NOV 2026
+                  </p>
+                </div>
               </div>
 
-              <div className="flex items-center justify-center gap-2.5">
-                <MapPin className="w-6 h-6 text-[#111111] stroke-[2.2] shrink-0" />
-                <p className="font-display text-[24px] leading-none text-[#111111] uppercase">
-                  UG FLOOR
-                </p>
+              <div className="flex items-center justify-center gap-2.5 pl-2">
+                <MapPin className="w-4 h-4 text-[#C8202F] stroke-[2.2] shrink-0" />
+                <div className="text-left">
+                  <p className="text-[9px] font-extrabold tracking-[0.16em] uppercase text-[#111111]/50 leading-none mb-1">
+                    LOCATION
+                  </p>
+                  <p className="font-display text-[19px] leading-none tracking-[0.02em] text-[#111111] uppercase">
+                    UG FLOOR
+                  </p>
+                </div>
               </div>
             </footer>
           </div>

@@ -232,7 +232,7 @@ export default function SpinWheelView({ user, onBack }: SpinWheelViewProps) {
         )}
 
         <p className="text-[11px] font-extrabold tracking-[0.2em] uppercase text-[#111111] mb-0.5">
-          GONG CHA • CENTRAL PARK
+          GONG CHA • <span className="text-[#C8202F]">CENTRAL PARK</span>
         </p>
         <h1
           className={`font-display uppercase text-[#111111] transition-all duration-300 leading-[0.88] ${
@@ -379,7 +379,7 @@ export default function SpinWheelView({ user, onBack }: SpinWheelViewProps) {
               {/* T&C Details */}
               <p className="text-[11px] font-semibold text-[#111111]/80 mt-2 leading-tight">
                 {wonPrize.segment.tnc} Valid only at{" "}
-                <strong className="text-[#111111]">Gong Cha Central Park (LG Floor)</strong>.
+                <strong className="text-[#111111]">Gong Cha Central Park (UG Floor)</strong>.
               </p>
             </div>
 
