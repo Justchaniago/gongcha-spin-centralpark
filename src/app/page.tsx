@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { Calendar, MapPin, X } from "lucide-react";
+import { Calendar, MapPin, X, Loader2, CheckCircle2 } from "lucide-react";
 import SpinWheelView from "@/components/SpinWheelView";
 
 interface UserRegistration {
@@ -20,6 +20,16 @@ export default function HomePage() {
   const [whatsapp, setWhatsapp] = useState("");
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // Real-time verification states
+  const [isCheckingPhone, setIsCheckingPhone] = useState(false);
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
+
+  const phoneDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const emailDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
   const [errors, setErrors] = useState<{
     name?: string;
     whatsapp?: string;
@@ -30,6 +40,103 @@ export default function HomePage() {
   const [registeredUser, setRegisteredUser] = useState<UserRegistration | null>(
     null
   );
+
+  // Real-time WhatsApp check (debounce 450ms)
+  useEffect(() => {
+    const cleaned = whatsapp.replace(/\D/g, "");
+    if (phoneDebounceRef.current) clearTimeout(phoneDebounceRef.current);
+
+    if (cleaned.length < 9) {
+      setPhoneVerified(false);
+      setIsCheckingPhone(false);
+      return;
+    }
+
+    setIsCheckingPhone(true);
+    setPhoneVerified(false);
+
+    phoneDebounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch("/api/check-user", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: "whatsapp", value: cleaned }),
+        });
+        const data = await res.json();
+        if (data.exists) {
+          setErrors((prev) => ({
+            ...prev,
+            whatsapp: data.message || "This WhatsApp number is already registered.",
+          }));
+          setPhoneVerified(false);
+        } else {
+          setErrors((prev) => {
+            const next = { ...prev };
+            delete next.whatsapp;
+            return next;
+          });
+          setPhoneVerified(true);
+        }
+      } catch (err) {
+        console.error("Failed to check phone", err);
+      } finally {
+        setIsCheckingPhone(false);
+      }
+    }, 450);
+
+    return () => {
+      if (phoneDebounceRef.current) clearTimeout(phoneDebounceRef.current);
+    };
+  }, [whatsapp]);
+
+  // Real-time Email check (debounce 450ms)
+  useEffect(() => {
+    const trimmed = email.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (emailDebounceRef.current) clearTimeout(emailDebounceRef.current);
+
+    if (!trimmed || !emailRegex.test(trimmed)) {
+      setEmailVerified(false);
+      setIsCheckingEmail(false);
+      return;
+    }
+
+    setIsCheckingEmail(true);
+    setEmailVerified(false);
+
+    emailDebounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch("/api/check-user", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: "email", value: trimmed }),
+        });
+        const data = await res.json();
+        if (data.exists) {
+          setErrors((prev) => ({
+            ...prev,
+            email: data.message || "This Email address is already registered.",
+          }));
+          setEmailVerified(false);
+        } else {
+          setErrors((prev) => {
+            const next = { ...prev };
+            delete next.email;
+            return next;
+          });
+          setEmailVerified(true);
+        }
+      } catch (err) {
+        console.error("Failed to check email", err);
+      } finally {
+        setIsCheckingEmail(false);
+      }
+    }, 450);
+
+    return () => {
+      if (emailDebounceRef.current) clearTimeout(emailDebounceRef.current);
+    };
+  }, [email]);
 
   const renderRegistrationForm = (buttonText: string) => (
     <form onSubmit={validateAndSubmit} noValidate className="space-y-4">
@@ -62,26 +169,44 @@ export default function HomePage() {
 
       {/* WhatsApp Number */}
       <div>
-        <label
-          htmlFor="whatsapp"
-          className="block text-[10px] font-black uppercase tracking-[0.16em] text-[#111111]/70 mb-1"
-        >
-          WhatsApp Number
-        </label>
-        <input
-          id="whatsapp"
-          type="tel"
-          inputMode="tel"
-          autoComplete="tel"
-          placeholder="e.g. 081234567890"
-          value={whatsapp}
-          onChange={(e) => {
-            setWhatsapp(e.target.value);
-            if (errors.whatsapp)
-              setErrors({ ...errors, whatsapp: undefined });
-          }}
-          className="w-full px-4 py-3 bg-[#FAF8F2] rounded-xl border-[2px] border-[#111111] shadow-[2px_2px_0px_#111111] text-sm font-bold text-[#111111] placeholder:text-[#111111]/30 focus:outline-none focus:bg-white focus:shadow-[3px_3px_0px_#C8202F] transition-all"
-        />
+        <div className="flex items-center justify-between mb-1">
+          <label
+            htmlFor="whatsapp"
+            className="block text-[10px] font-black uppercase tracking-[0.16em] text-[#111111]/70"
+          >
+            WhatsApp Number
+          </label>
+          {isCheckingPhone && (
+            <span className="flex items-center gap-1 text-[10px] font-bold text-[#111111]/60">
+              <Loader2 className="w-3 h-3 animate-spin text-[#C8202F]" /> Checking...
+            </span>
+          )}
+          {phoneVerified && !errors.whatsapp && (
+            <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-700">
+              <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Available
+            </span>
+          )}
+        </div>
+        <div className="relative">
+          <input
+            id="whatsapp"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            placeholder="e.g. 081234567890"
+            value={whatsapp}
+            onChange={(e) => {
+              setWhatsapp(e.target.value);
+              if (errors.whatsapp)
+                setErrors({ ...errors, whatsapp: undefined });
+            }}
+            className={`w-full px-4 py-3 bg-[#FAF8F2] rounded-xl border-[2px] ${
+              errors.whatsapp
+                ? "border-[#C8202F] shadow-[2px_2px_0px_#C8202F]"
+                : "border-[#111111] shadow-[2px_2px_0px_#111111]"
+            } text-sm font-bold text-[#111111] placeholder:text-[#111111]/30 focus:outline-none focus:bg-white focus:shadow-[3px_3px_0px_#C8202F] transition-all`}
+          />
+        </div>
         {errors.whatsapp && (
           <p className="text-[11px] font-bold text-[#C8202F] mt-1.5 flex items-center gap-1">
             <span>•</span> {errors.whatsapp}
@@ -91,25 +216,43 @@ export default function HomePage() {
 
       {/* Email Address */}
       <div>
-        <label
-          htmlFor="email"
-          className="block text-[10px] font-black uppercase tracking-[0.16em] text-[#111111]/70 mb-1"
-        >
-          Email Address
-        </label>
-        <input
-          id="email"
-          type="email"
-          inputMode="email"
-          autoComplete="email"
-          placeholder="e.g. alex@email.com"
-          value={email}
-          onChange={(e) => {
-            setEmail(e.target.value);
-            if (errors.email) setErrors({ ...errors, email: undefined });
-          }}
-          className="w-full px-4 py-3 bg-[#FAF8F2] rounded-xl border-[2px] border-[#111111] shadow-[2px_2px_0px_#111111] text-sm font-bold text-[#111111] placeholder:text-[#111111]/30 focus:outline-none focus:bg-white focus:shadow-[3px_3px_0px_#C8202F] transition-all"
-        />
+        <div className="flex items-center justify-between mb-1">
+          <label
+            htmlFor="email"
+            className="block text-[10px] font-black uppercase tracking-[0.16em] text-[#111111]/70"
+          >
+            Email Address
+          </label>
+          {isCheckingEmail && (
+            <span className="flex items-center gap-1 text-[10px] font-bold text-[#111111]/60">
+              <Loader2 className="w-3 h-3 animate-spin text-[#C8202F]" /> Checking...
+            </span>
+          )}
+          {emailVerified && !errors.email && (
+            <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-700">
+              <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Available
+            </span>
+          )}
+        </div>
+        <div className="relative">
+          <input
+            id="email"
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            placeholder="e.g. alex@email.com"
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              if (errors.email) setErrors({ ...errors, email: undefined });
+            }}
+            className={`w-full px-4 py-3 bg-[#FAF8F2] rounded-xl border-[2px] ${
+              errors.email
+                ? "border-[#C8202F] shadow-[2px_2px_0px_#C8202F]"
+                : "border-[#111111] shadow-[2px_2px_0px_#111111]"
+            } text-sm font-bold text-[#111111] placeholder:text-[#111111]/30 focus:outline-none focus:bg-white focus:shadow-[3px_3px_0px_#C8202F] transition-all`}
+          />
+        </div>
         {errors.email && (
           <p className="text-[11px] font-bold text-[#C8202F] mt-1.5 flex items-center gap-1">
             <span>•</span> {errors.email}
