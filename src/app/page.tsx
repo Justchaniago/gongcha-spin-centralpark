@@ -37,7 +37,7 @@ export default function HomePage() {
       <div>
         <label
           htmlFor="full-name"
-          className="block text-[11px] font-extrabold uppercase tracking-wider text-[#111111] mb-1.5"
+          className="block text-[10px] font-black uppercase tracking-[0.16em] text-[#111111]/70 mb-1"
         >
           Full Name
         </label>
@@ -51,11 +51,11 @@ export default function HomePage() {
             setName(e.target.value);
             if (errors.name) setErrors({ ...errors, name: undefined });
           }}
-          className="w-full px-4 py-3 bg-white rounded-xl border-2 border-[#111111] text-sm font-bold text-[#111111] placeholder:text-[#111111]/35 focus:outline-none focus:ring-2 focus:ring-[#C8202F]"
+          className="w-full px-4 py-3 bg-[#FAF8F2] rounded-xl border-[2px] border-[#111111] shadow-[2px_2px_0px_#111111] text-sm font-bold text-[#111111] placeholder:text-[#111111]/30 focus:outline-none focus:bg-white focus:shadow-[3px_3px_0px_#C8202F] transition-all"
         />
         {errors.name && (
-          <p className="text-[11px] font-bold text-[#C8202F] mt-1">
-            {errors.name}
+          <p className="text-[11px] font-bold text-[#C8202F] mt-1.5 flex items-center gap-1">
+            <span>•</span> {errors.name}
           </p>
         )}
       </div>
@@ -64,7 +64,7 @@ export default function HomePage() {
       <div>
         <label
           htmlFor="whatsapp"
-          className="block text-[11px] font-extrabold uppercase tracking-wider text-[#111111] mb-1.5"
+          className="block text-[10px] font-black uppercase tracking-[0.16em] text-[#111111]/70 mb-1"
         >
           WhatsApp Number
         </label>
@@ -80,11 +80,11 @@ export default function HomePage() {
             if (errors.whatsapp)
               setErrors({ ...errors, whatsapp: undefined });
           }}
-          className="w-full px-4 py-3 bg-white rounded-xl border-2 border-[#111111] text-sm font-bold text-[#111111] placeholder:text-[#111111]/35 focus:outline-none focus:ring-2 focus:ring-[#C8202F]"
+          className="w-full px-4 py-3 bg-[#FAF8F2] rounded-xl border-[2px] border-[#111111] shadow-[2px_2px_0px_#111111] text-sm font-bold text-[#111111] placeholder:text-[#111111]/30 focus:outline-none focus:bg-white focus:shadow-[3px_3px_0px_#C8202F] transition-all"
         />
         {errors.whatsapp && (
-          <p className="text-[11px] font-bold text-[#C8202F] mt-1">
-            {errors.whatsapp}
+          <p className="text-[11px] font-bold text-[#C8202F] mt-1.5 flex items-center gap-1">
+            <span>•</span> {errors.whatsapp}
           </p>
         )}
       </div>
@@ -93,7 +93,7 @@ export default function HomePage() {
       <div>
         <label
           htmlFor="email"
-          className="block text-[11px] font-extrabold uppercase tracking-wider text-[#111111] mb-1.5"
+          className="block text-[10px] font-black uppercase tracking-[0.16em] text-[#111111]/70 mb-1"
         >
           Email Address
         </label>
@@ -108,21 +108,21 @@ export default function HomePage() {
             setEmail(e.target.value);
             if (errors.email) setErrors({ ...errors, email: undefined });
           }}
-          className="w-full px-4 py-3 bg-white rounded-xl border-2 border-[#111111] text-sm font-bold text-[#111111] placeholder:text-[#111111]/35 focus:outline-none focus:ring-2 focus:ring-[#C8202F]"
+          className="w-full px-4 py-3 bg-[#FAF8F2] rounded-xl border-[2px] border-[#111111] shadow-[2px_2px_0px_#111111] text-sm font-bold text-[#111111] placeholder:text-[#111111]/30 focus:outline-none focus:bg-white focus:shadow-[3px_3px_0px_#C8202F] transition-all"
         />
         {errors.email && (
-          <p className="text-[11px] font-bold text-[#C8202F] mt-1">
-            {errors.email}
+          <p className="text-[11px] font-bold text-[#C8202F] mt-1.5 flex items-center gap-1">
+            <span>•</span> {errors.email}
           </p>
         )}
       </div>
 
-      <p className="text-[11px] font-semibold text-[#111111]/60 pt-0.5">
-        *Limited to 1 spin per WhatsApp number & email address.
+      <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#111111]/50 pt-0.5">
+        *Limited to 1 spin per WhatsApp & email address
       </p>
 
       {errors.general && (
-        <div className="p-3 bg-red-100 border-2 border-[#C8202F] text-[#C8202F] rounded-xl text-xs font-bold">
+        <div className="p-3 bg-[#C8202F]/10 border-[2px] border-[#C8202F] text-[#C8202F] rounded-xl text-xs font-bold shadow-[2px_2px_0px_#C8202F]">
           {errors.general}
         </div>
       )}
@@ -130,7 +130,7 @@ export default function HomePage() {
       <button
         type="submit"
         disabled={isLoading}
-        className="w-full py-4 mt-1 bg-[#C8202F] hover:bg-[#A81926] disabled:opacity-60 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_#111111] text-[#F5F2E8] font-display text-[22px] tracking-[0.06em] uppercase rounded-xl border-[2.5px] border-[#111111] shadow-[4px_4px_0px_#111111] transition-all cursor-pointer"
+        className="w-full py-4 mt-1 bg-[#C8202F] hover:bg-[#A81926] disabled:opacity-60 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_#111111] text-[#F5F2E8] font-display text-[22px] tracking-[0.06em] uppercase rounded-2xl border-[2.5px] border-[#111111] shadow-[4px_4px_0px_#111111] transition-all cursor-pointer select-none"
       >
         {isLoading ? "VERIFYING..." : buttonText}
       </button>
@@ -280,10 +280,10 @@ export default function HomePage() {
 
             {/* Right Column: Embedded Registration Card */}
             <div className="lg:col-span-5 w-full flex flex-col items-center">
-              <div className="w-full bg-[#EDE8D8]/80 rounded-[28px] border-[2.5px] border-[#111111] shadow-[6px_6px_0px_#111111] p-7 text-left">
-                <div className="mb-5">
-                  <div className="inline-block px-2.5 py-0.5 bg-[#C8202F]/10 rounded-md border border-[#C8202F]/30 mb-2">
-                    <span className="text-[10px] font-black uppercase tracking-[0.18em] text-[#C8202F]">
+              <div className="w-full bg-[#EDE8D8] rounded-[28px] border-[2.5px] border-[#111111] shadow-[6px_6px_0px_#111111] p-7 text-left">
+                <div className="mb-5 pb-4 border-b-[1.5px] border-[#111111]/20">
+                  <div className="inline-block px-3 py-0.5 mb-2.5 bg-[#FAF8F2] border-[1.5px] border-[#111111] rounded-full shadow-[2px_2px_0px_#111111]">
+                    <span className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#C8202F]">
                       STEP 1 OF 2 • GUEST REGISTRATION
                     </span>
                   </div>
@@ -414,29 +414,31 @@ export default function HomePage() {
           />
 
           {/* Sheet Container */}
-          <div className="relative w-full max-w-[430px] bg-[#F5F2E8] rounded-t-[28px] border-t-[3px] border-x-[3px] border-[#111111] shadow-[0_-8px_0_#111111] px-6 pt-4 pb-8 z-10 animate-slide-up-sheet">
+          <div className="relative w-full max-w-[430px] bg-[#EDE8D8] rounded-t-[28px] border-t-[3px] border-x-[3px] border-[#111111] shadow-[0_-8px_0_#111111] px-6 pt-4 pb-8 z-10 animate-slide-up-sheet">
             {/* Drag Handle Bar */}
-            <div className="w-12 h-1.5 bg-[#111111]/25 rounded-full mx-auto mb-4" />
+            <div className="w-12 h-1 bg-[#111111]/30 rounded-full mx-auto mb-4" />
 
             {/* Close Button */}
             <button
               type="button"
               onClick={() => setIsDrawerOpen(false)}
               aria-label="Close drawer"
-              className="absolute top-5 right-5 w-8 h-8 rounded-full border-2 border-[#111111] flex items-center justify-center text-[#111111] hover:bg-[#111111] hover:text-[#F5F2E8] transition-colors cursor-pointer"
+              className="absolute top-5 right-5 w-8 h-8 rounded-full border-[2px] border-[#111111] shadow-[2px_2px_0px_#111111] flex items-center justify-center bg-[#FAF8F2] text-[#111111] hover:bg-[#111111] hover:text-[#F5F2E8] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer"
             >
               <X className="w-4 h-4 stroke-[2.5]" />
             </button>
 
             {/* Header */}
-            <div className="mb-5">
-              <span className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#C8202F]">
-                STEP 1 OF 2 • GUEST REGISTRATION
-              </span>
-              <h2 className="font-display text-[36px] leading-[0.95] uppercase text-[#111111] mt-1">
+            <div className="mb-5 pb-4 border-b-[1.5px] border-[#111111]/20">
+              <div className="inline-block px-3 py-0.5 mb-2 bg-[#FAF8F2] border-[1.5px] border-[#111111] rounded-full shadow-[2px_2px_0px_#111111]">
+                <span className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#C8202F]">
+                  STEP 1 OF 2 • GUEST REGISTRATION
+                </span>
+              </div>
+              <h2 className="font-display text-[34px] leading-[0.95] uppercase text-[#111111]">
                 UNLOCK YOUR SPIN
               </h2>
-              <p className="text-xs font-semibold text-[#111111]/70 mt-1">
+              <p className="text-xs font-semibold text-[#111111]/70 mt-1 leading-relaxed">
                 Complete your details below to spin the wheel and get your Grand Opening Exclusive Voucher.
               </p>
             </div>
