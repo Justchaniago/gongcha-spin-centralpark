@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { Calendar, Clock, MapPin, X } from "lucide-react";
+import { Calendar, MapPin, X } from "lucide-react";
 import SpinWheelView from "@/components/SpinWheelView";
 
 interface UserRegistration {
@@ -101,12 +101,9 @@ export default function HomePage() {
         <div className="w-full max-w-[380px] flex-1 flex flex-col items-center justify-between relative z-10">
           {/* 1. Top Header & Display Headline */}
           <header className="w-full text-center flex flex-col items-center select-none">
-            <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#C8202F]/10 border border-[#C8202F]/25 mb-3 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
-              <span className="w-2 h-2 rounded-full bg-[#C8202F] animate-pulse" />
-              <p className="text-[12px] sm:text-[13px] font-black tracking-[0.2em] uppercase text-[#C8202F]">
-                GONG CHA • CENTRAL PARK
-              </p>
-            </div>
+            <p className="font-display text-[26px] sm:text-[28px] leading-none tracking-[0.08em] uppercase text-[#C8202F] mb-2">
+              GONG CHA • CENTRAL PARK
+            </p>
 
             <h1 className="font-display text-[76px] sm:text-[84px] leading-[0.88] tracking-[-0.01em] uppercase text-[#111111]">
               GRAND
@@ -146,29 +143,19 @@ export default function HomePage() {
               GET YOUR VOUCHER
             </button>
 
-            <footer className="w-full grid grid-cols-2 gap-4 px-2 py-3 bg-[#EDE8D8]/70 border-[2px] border-[#111111]/15 rounded-2xl">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#111111] flex items-center justify-center shrink-0 shadow-[2px_2px_0px_#C8202F]">
-                  <Calendar className="w-5 h-5 text-[#F5F2E8] stroke-[2.2]" />
-                </div>
-                <div className="flex flex-col text-left">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#111111]/60">Date</span>
-                  <p className="font-display text-[20px] leading-tight text-[#111111] uppercase">
-                    3 NOV 2026
-                  </p>
-                </div>
+            <footer className="w-full grid grid-cols-2 gap-6 px-4 pt-1">
+              <div className="flex items-center justify-center gap-2.5">
+                <Calendar className="w-6 h-6 text-[#111111] stroke-[2.2] shrink-0" />
+                <p className="font-display text-[24px] leading-none text-[#111111] uppercase">
+                  3 NOV 2026
+                </p>
               </div>
 
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#111111] flex items-center justify-center shrink-0 shadow-[2px_2px_0px_#C8202F]">
-                  <MapPin className="w-5 h-5 text-[#F5F2E8] stroke-[2.2]" />
-                </div>
-                <div className="flex flex-col text-left">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#111111]/60">Location</span>
-                  <p className="font-display text-[18px] leading-tight text-[#111111] uppercase">
-                    UG FLOOR
-                  </p>
-                </div>
+              <div className="flex items-center justify-center gap-2.5">
+                <MapPin className="w-6 h-6 text-[#111111] stroke-[2.2] shrink-0" />
+                <p className="font-display text-[24px] leading-none text-[#111111] uppercase">
+                  UG FLOOR
+                </p>
               </div>
             </footer>
           </div>
