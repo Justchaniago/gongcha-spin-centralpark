@@ -77,6 +77,7 @@ interface SpinWheelViewProps {
     name: string;
     whatsapp: string;
     email: string;
+    userId?: string;
   };
   onBack: () => void;
 }
@@ -93,40 +94,76 @@ export default function SpinWheelView({ user, onBack }: SpinWheelViewProps) {
   const spinCountRef = useRef(0);
   const voucherCardRef = useRef<HTMLDivElement>(null);
 
-  const handleSpin = () => {
+  const handleSpin = async () => {
     if (isSpinning || wonPrize) return;
 
     setIsSpinning(true);
-    const totalSegments = PRIZE_SEGMENTS.length;
-    const segmentAngle = 360 / totalSegments;
 
-    const winningIndex = Math.floor(Math.random() * totalSegments);
-    const targetSliceCenter = winningIndex * segmentAngle;
-    const randomOffset = (Math.random() - 0.5) * (segmentAngle * 0.5);
-    const fullSpins = (spinCountRef.current + 1) * 6 * 360;
-    const finalAngle = fullSpins + (360 - targetSliceCenter) + randomOffset;
+    try {
+      // 1. Call real backend API if userId is present
+      let serverVoucher = null;
+      let targetPrizeIndex = -1;
 
-    spinCountRef.current += 1;
-    setRotation(finalAngle);
+      if (user.userId) {
+        const res = await fetch("/api/spin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: user.userId }),
+        });
 
-    const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
-    const chosenSegment = PRIZE_SEGMENTS[winningIndex];
-    const generatedCode = `${chosenSegment.codePrefix}-${randomSuffix}`;
+        const data = await res.json();
+        if (res.ok && data.voucher) {
+          serverVoucher = data.voucher;
+          targetPrizeIndex = PRIZE_SEGMENTS.findIndex(
+            (s) => s.id === data.voucher.prizeId
+          );
+        } else {
+          alert(data.error || "Failed to spin. Please try again.");
+          setIsSpinning(false);
+          return;
+        }
+      }
 
-    setTimeout(() => {
+      const totalSegments = PRIZE_SEGMENTS.length;
+      const segmentAngle = 360 / totalSegments;
+
+      const winningIndex =
+        targetPrizeIndex !== -1
+          ? targetPrizeIndex
+          : Math.floor(Math.random() * totalSegments);
+
+      const targetSliceCenter = winningIndex * segmentAngle;
+      const randomOffset = (Math.random() - 0.5) * (segmentAngle * 0.5);
+      const fullSpins = (spinCountRef.current + 1) * 6 * 360;
+      const finalAngle = fullSpins + (360 - targetSliceCenter) + randomOffset;
+
+      spinCountRef.current += 1;
+      setRotation(finalAngle);
+
+      const chosenSegment = PRIZE_SEGMENTS[winningIndex];
+      const finalCode =
+        serverVoucher?.uniqueCode ||
+        `${chosenSegment.codePrefix}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+      setTimeout(() => {
+        setIsSpinning(false);
+        setWonPrize({
+          segment: chosenSegment,
+          uniqueCode: finalCode,
+        });
+
+        confetti({
+          particleCount: 65,
+          spread: 60,
+          origin: { y: 0.5 },
+          colors: ["#C8202F", "#F39C12", "#111111", "#F5F2E8"],
+        });
+      }, 4700);
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong while spinning.");
       setIsSpinning(false);
-      setWonPrize({
-        segment: chosenSegment,
-        uniqueCode: generatedCode,
-      });
-
-      confetti({
-        particleCount: 65,
-        spread: 60,
-        origin: { y: 0.5 },
-        colors: ["#C8202F", "#F39C12", "#111111", "#F5F2E8"],
-      });
-    }, 4700);
+    }
   };
 
   const handleDownloadVoucher = async () => {

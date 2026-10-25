@@ -23,7 +23,7 @@ CREATE TABLE prizes (
     text_color VARCHAR(20) NOT NULL,
     code_prefix VARCHAR(20) NOT NULL,
     terms_conditions TEXT NOT NULL,
-    probability_weight INT NOT NULL DEFAULT 10, -- Semakin besar angka, semakin sering keluar di spin
+    probability_weight INT NOT NULL DEFAULT 10,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -41,8 +41,8 @@ INSERT INTO prizes (id, name, short_label, color, text_color, code_prefix, terms
 CREATE TABLE guest_users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     full_name VARCHAR(150) NOT NULL,
-    whatsapp VARCHAR(25) NOT NULL UNIQUE, -- 1 nomor HP = 1x hak klaim
-    email VARCHAR(150) NOT NULL UNIQUE,    -- 1 email = 1x hak klaim
+    whatsapp VARCHAR(25) NOT NULL UNIQUE,
+    email VARCHAR(150) NOT NULL UNIQUE,
     ip_address VARCHAR(50),
     user_agent TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
@@ -52,7 +52,7 @@ CREATE TABLE guest_users (
 CREATE TABLE voucher_codes (
     id BIGSERIAL PRIMARY KEY,
     prize_id VARCHAR(50) NOT NULL REFERENCES prizes(id) ON DELETE RESTRICT,
-    unique_code VARCHAR(100) NOT NULL UNIQUE, -- Kode unik dari POS Gong Cha
+    unique_code VARCHAR(100) NOT NULL UNIQUE,
     status voucher_status_enum NOT NULL DEFAULT 'AVAILABLE',
     assigned_to_user_id UUID REFERENCES guest_users(id),
     assigned_at TIMESTAMPTZ,
@@ -60,7 +60,6 @@ CREATE TABLE voucher_codes (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Index agar pencarian voucher available berkecepatan tinggi & anti-race condition
 CREATE INDEX idx_vouchers_pool ON voucher_codes (prize_id, status) WHERE status = 'AVAILABLE';
 CREATE INDEX idx_vouchers_code ON voucher_codes (unique_code);
 
@@ -74,7 +73,44 @@ CREATE TABLE spin_transactions (
     CONSTRAINT uq_guest_one_spin UNIQUE (user_id)
 );
 
--- 8. Prosedur Atomic: Ambil Kode Tanpa Resiko Ganda (FOR UPDATE SKIP LOCKED)
+-- ====================================================================
+-- ROW LEVEL SECURITY (RLS) POLICIES
+-- ====================================================================
+ALTER TABLE prizes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE guest_users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE voucher_codes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE spin_transactions ENABLE ROW LEVEL SECURITY;
+
+-- 1. Tabel prizes: Publik boleh membaca daftar hadiah aktif
+CREATE POLICY "Public can view active prizes"
+ON prizes FOR SELECT
+TO anon, authenticated
+USING (is_active = true);
+
+-- 2. Service role (backend API Next.js) memiliki hak akses penuh ke semua tabel
+CREATE POLICY "Service role full access to prizes"
+ON prizes FOR ALL
+TO service_role
+USING (true) WITH CHECK (true);
+
+CREATE POLICY "Service role full access to guest_users"
+ON guest_users FOR ALL
+TO service_role
+USING (true) WITH CHECK (true);
+
+CREATE POLICY "Service role full access to voucher_codes"
+ON voucher_codes FOR ALL
+TO service_role
+USING (true) WITH CHECK (true);
+
+CREATE POLICY "Service role full access to spin_transactions"
+ON spin_transactions FOR ALL
+TO service_role
+USING (true) WITH CHECK (true);
+
+-- ====================================================================
+-- ATOMIC STORED PROCEDURE (FOR UPDATE SKIP LOCKED)
+-- ====================================================================
 CREATE OR REPLACE FUNCTION claim_spin_voucher(
     p_user_id UUID,
     p_requested_prize_id VARCHAR(50)
@@ -88,6 +124,7 @@ RETURNS TABLE (
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public
 AS $$
 DECLARE
     v_voucher_id BIGINT;
@@ -142,7 +179,7 @@ BEGIN
 END;
 $$;
 
--- 9. Contoh Sample 30 Kode POS untuk Uji Coba Awal (Testing Pool)
+-- Sample 30 Kode POS untuk Testing
 INSERT INTO voucher_codes (prize_id, unique_code) VALUES
 ('FREE_PMT', 'GC-CP-PMT-001'),
 ('FREE_PMT', 'GC-CP-PMT-002'),

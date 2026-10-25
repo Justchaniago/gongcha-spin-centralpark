@@ -31,23 +31,17 @@ export async function POST(req: NextRequest) {
       .maybeSingle();
 
     if (existingUser) {
-      // If already spun, return their existing claimed voucher
+      // If already spun, immediately REJECT with 409 Conflict
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const tx = (existingUser as any).spin_transactions?.[0];
       if (tx) {
-        return NextResponse.json({
-          status: "ALREADY_CLAIMED",
-          message: "You have already claimed your Grand Opening voucher with this number or email.",
-          user: {
-            id: existingUser.id,
-            name: existingUser.full_name,
+        return NextResponse.json(
+          {
+            error:
+              "This WhatsApp number or Email has already participated. Each guest is limited to 1 voucher.",
           },
-          voucher: {
-            uniqueCode: tx.voucher_codes?.unique_code,
-            prizeName: tx.voucher_codes?.prizes?.name,
-            termsConditions: tx.voucher_codes?.prizes?.terms_conditions,
-          },
-        });
+          { status: 409 }
+        );
       }
 
       // Registered but hasn't spun yet

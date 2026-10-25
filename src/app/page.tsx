@@ -9,6 +9,7 @@ interface UserRegistration {
   name: string;
   whatsapp: string;
   email: string;
+  userId?: string;
 }
 
 export default function HomePage() {
@@ -18,19 +19,21 @@ export default function HomePage() {
   const [name, setName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [email, setEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{
     name?: string;
     whatsapp?: string;
     email?: string;
+    general?: string;
   }>({});
 
   const [registeredUser, setRegisteredUser] = useState<UserRegistration | null>(
     null
   );
 
-  const validateAndSubmit = (e: React.FormEvent) => {
+  const validateAndSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newErrors: { name?: string; whatsapp?: string; email?: string } = {};
+    const newErrors: { name?: string; whatsapp?: string; email?: string; general?: string } = {};
 
     if (name.trim().length < 2) {
       newErrors.name = "Please enter your full name.";
@@ -51,18 +54,45 @@ export default function HomePage() {
       return;
     }
 
-    setErrors({});
-    setRegisteredUser({
-      name: name.trim(),
-      whatsapp: cleanedPhone,
-      email: email.trim(),
-    });
-    setIsDrawerOpen(false);
+    try {
+      setIsLoading(true);
+      setErrors({});
 
-    // Smooth transition to Spin Wheel screen after drawer slides down
-    setTimeout(() => {
-      setStep("spin");
-    }, 280);
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fullName: name.trim(),
+          whatsapp: cleanedPhone,
+          email: email.trim(),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setErrors({ general: data.error || "Registration failed. Please try again." });
+        setIsLoading(false);
+        return;
+      }
+
+      setRegisteredUser({
+        name: name.trim(),
+        whatsapp: cleanedPhone,
+        email: email.trim(),
+        userId: data.userId,
+      });
+
+      setIsDrawerOpen(false);
+      setTimeout(() => {
+        setStep("spin");
+      }, 280);
+    } catch (err) {
+      console.error(err);
+      setErrors({ general: "Network error. Please try again." });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -284,11 +314,18 @@ export default function HomePage() {
               *Limited to 1 spin per WhatsApp number & email address.
             </p>
 
+            {errors.general && (
+              <div className="p-3 bg-red-100 border-2 border-[#C8202F] text-[#C8202F] rounded-xl text-xs font-bold">
+                {errors.general}
+              </div>
+            )}
+
             <button
               type="submit"
-              className="w-full py-4 mt-1 bg-[#C8202F] hover:bg-[#A81926] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_#111111] text-[#F5F2E8] font-display text-[22px] tracking-[0.06em] uppercase rounded-xl border-[2.5px] border-[#111111] shadow-[4px_4px_0px_#111111] transition-all cursor-pointer"
+              disabled={isLoading}
+              className="w-full py-4 mt-1 bg-[#C8202F] hover:bg-[#A81926] disabled:opacity-60 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_#111111] text-[#F5F2E8] font-display text-[22px] tracking-[0.06em] uppercase rounded-xl border-[2.5px] border-[#111111] shadow-[4px_4px_0px_#111111] transition-all cursor-pointer"
             >
-              CONTINUE TO SPIN WHEEL
+              {isLoading ? "VERIFYING..." : "CONTINUE TO SPIN WHEEL"}
             </button>
           </form>
         </div>
