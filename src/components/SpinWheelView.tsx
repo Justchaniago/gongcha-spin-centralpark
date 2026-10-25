@@ -175,12 +175,42 @@ export default function SpinWheelView({ user, onBack }: SpinWheelViewProps) {
         pixelRatio: 2,
         backgroundColor: "#FFFFFF",
       });
+
+      const fileName = `GongCha-Voucher-${wonPrize?.uniqueCode || "Reward"}.png`;
+
+      // 1. Try Web Share API (native iOS "Save Image" / Files sheet)
+      if (navigator.share && navigator.canShare) {
+        try {
+          const blob = await (await fetch(dataUrl)).blob();
+          const file = new File([blob], fileName, { type: "image/png" });
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: "Gong Cha Central Park Voucher",
+              text: `My exclusive voucher: ${wonPrize?.uniqueCode}`,
+            });
+            setIsSaving(false);
+            return;
+          }
+        } catch (shareErr) {
+          // If user cancelled sharing sheet, just exit gracefully
+          if ((shareErr as Error).name === "AbortError") {
+            setIsSaving(false);
+            return;
+          }
+        }
+      }
+
+      // 2. Fallback: Trigger standard anchor download
       const link = document.createElement("a");
-      link.download = `GongCha-Voucher-${wonPrize?.uniqueCode || "Reward"}.png`;
+      link.download = fileName;
       link.href = dataUrl;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
     } catch (err) {
       console.error("Failed to download image", err);
+      alert("Please take a screenshot of this voucher card to present at the cashier.");
     } finally {
       setIsSaving(false);
     }
