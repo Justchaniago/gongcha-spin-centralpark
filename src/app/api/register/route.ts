@@ -33,8 +33,10 @@ export async function POST(req: NextRequest) {
     if (existingUser) {
       // If already spun, immediately REJECT with 409 Conflict
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const tx = (existingUser as any).spin_transactions?.[0];
-      if (tx) {
+      const tx = (existingUser as any).spin_transactions;
+      const hasSpun = Array.isArray(tx) ? tx.length > 0 : !!tx;
+
+      if (hasSpun) {
         return NextResponse.json(
           {
             error:
