@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import confetti from "canvas-confetti";
-import { Download, Camera, ArrowLeft, Loader2 } from "lucide-react";
+import { Download, Camera, ArrowLeft, Home, X } from "lucide-react";
 import { toPng } from "html-to-image";
 
 export interface PrizeSegment {
@@ -250,14 +250,19 @@ export default function SpinWheelView({ user, onBack }: SpinWheelViewProps) {
     <div className="w-full max-w-[380px] lg:max-w-full flex-1 flex flex-col items-center justify-between py-1 px-1 select-none">
       {/* 1. Header Area with compact spacing */}
       <header className="w-full text-center flex flex-col items-center relative mb-2">
-        {!isSpinning && !wonPrize && (
+        {!isSpinning && (
           <button
             type="button"
             onClick={onBack}
-            className="absolute left-0 top-0.5 w-8 h-8 rounded-full border-2 border-[#111111] flex items-center justify-center bg-[#F5F2E8] active:translate-y-0.5 cursor-pointer shadow-[2px_2px_0px_#111111]"
-            aria-label="Back"
+            className="absolute left-0 top-0.5 w-8 h-8 rounded-full border-[2px] border-[#111111] flex items-center justify-center bg-[#FAF8F2] hover:bg-[#111111] hover:text-[#F5F2E8] active:translate-y-0.5 cursor-pointer shadow-[2px_2px_0px_#111111] transition-colors"
+            aria-label={wonPrize ? "Return to Home" : "Back"}
+            title={wonPrize ? "Return to Home" : "Back"}
           >
-            <ArrowLeft className="w-4 h-4 stroke-[2.5]" />
+            {wonPrize ? (
+              <X className="w-4 h-4 stroke-[2.5]" />
+            ) : (
+              <ArrowLeft className="w-4 h-4 stroke-[2.5]" />
+            )}
           </button>
         )}
 
@@ -442,6 +447,16 @@ export default function SpinWheelView({ user, onBack }: SpinWheelViewProps) {
               >
                 <Download className="w-4 h-4 stroke-[2.5]" />
                 <span>{isSaving ? "SAVING VOUCHER..." : "SAVE / DOWNLOAD VOUCHER"}</span>
+              </button>
+
+              {/* Return to Home Button */}
+              <button
+                type="button"
+                onClick={onBack}
+                className="w-full py-3 bg-[#FAF8F2] hover:bg-[#EDE8D8] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_#111111] text-[#111111] font-display text-[16px] tracking-[0.06em] uppercase rounded-xl border-[2px] border-[#111111] shadow-[3px_3px_0px_#111111] transition-all cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Home className="w-4 h-4 stroke-[2.5]" />
+                <span>RETURN TO HOME</span>
               </button>
 
               {/* Helpful Helper Text for Screenshot */}
