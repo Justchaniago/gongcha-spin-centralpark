@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import confetti from "canvas-confetti";
-import { Download, Camera, ArrowLeft } from "lucide-react";
+import { Download, Camera, ArrowLeft, Loader2 } from "lucide-react";
 import { toPng } from "html-to-image";
 
 export interface PrizeSegment {
@@ -15,60 +15,61 @@ export interface PrizeSegment {
   tnc: string;
 }
 
-const PRIZE_SEGMENTS: PrizeSegment[] = [
+// Fallback jika API sedang offline / awal loading
+const DEFAULT_PRIZE_SEGMENTS: PrizeSegment[] = [
   {
-    id: "free-pmt",
+    id: "FREE_PMT",
     label: "FREE PEARL MILK TEA",
     shortLabel: "FREE DRINK",
     color: "#C8202F",
     textColor: "#F5F2E8",
     codePrefix: "GC-PMT",
-    tnc: "Valid for 1 Regular Pearl Milk Tea.",
+    tnc: "Valid for 1 Regular Pearl Milk Tea. Valid only at Gong Cha Central Park (UG Floor).",
   },
   {
-    id: "bogo",
+    id: "BOGO",
     label: "BUY 1 GET 1 FREE",
     shortLabel: "BUY 1 GET 1",
     color: "#F5F2E8",
     textColor: "#111111",
     codePrefix: "GC-BOGO",
-    tnc: "Buy any Large drink, get 1 Regular free.",
+    tnc: "Buy any Large drink and get 1 Regular free. Valid only at Gong Cha Central Park (UG Floor).",
   },
   {
-    id: "disc-50",
+    id: "DISC_50",
     label: "50% OFF SECOND CUP",
     shortLabel: "50% OFF",
     color: "#F39C12",
     textColor: "#111111",
     codePrefix: "GC-50OFF",
-    tnc: "50% discount on your second cup.",
+    tnc: "50% discount on second cup in single receipt. Valid only at Gong Cha Central Park (UG Floor).",
   },
   {
-    id: "free-upsize",
+    id: "FREE_UPSIZE",
     label: "FREE LARGE UPSIZE",
     shortLabel: "FREE UPSIZE",
     color: "#F5F2E8",
     textColor: "#111111",
     codePrefix: "GC-UPSZ",
-    tnc: "Free upgrade from Regular to Large.",
+    tnc: "Free upgrade from Regular to Large. Valid only at Gong Cha Central Park (UG Floor).",
   },
   {
-    id: "voucher-15k",
+    id: "VOUCHER_15K",
     label: "IDR 15K CASHBACK",
     shortLabel: "IDR 15K OFF",
     color: "#C8202F",
     textColor: "#F5F2E8",
     codePrefix: "GC-15K",
-    tnc: "IDR 15,000 off min purchase IDR 50,000.",
+    tnc: "IDR 15,000 off min purchase IDR 50,000. Valid only at Gong Cha Central Park (UG Floor).",
   },
   {
-    id: "free-topping",
+    id: "FREE_TOPPING",
     label: "FREE TOPPING",
     shortLabel: "FREE TOPPING",
     color: "#F39C12",
     textColor: "#111111",
     codePrefix: "GC-TOP",
-    tnc: "Free Pearl or Milk Foam topping.",
+    tnc: "Free Pearl or Milk Foam topping. Valid only at Gong Cha Central Park (UG Floor).",
   },
 ];
 
@@ -83,6 +84,8 @@ interface SpinWheelViewProps {
 }
 
 export default function SpinWheelView({ user, onBack }: SpinWheelViewProps) {
+  const [prizes, setPrizes] = useState<PrizeSegment[]>(DEFAULT_PRIZE_SEGMENTS);
+  const [isLoadingPrizes, setIsLoadingPrizes] = useState(true);
   const [rotation, setRotation] = useState(0);
   const [isSpinning, setIsSpinning] = useState(false);
   const [wonPrize, setWonPrize] = useState<{
@@ -93,6 +96,26 @@ export default function SpinWheelView({ user, onBack }: SpinWheelViewProps) {
 
   const spinCountRef = useRef(0);
   const voucherCardRef = useRef<HTMLDivElement>(null);
+
+  // Fetch prizes from Database via API
+  useEffect(() => {
+    async function loadPrizesFromDB() {
+      try {
+        const res = await fetch("/api/prizes");
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.prizes) && data.prizes.length > 0) {
+            setPrizes(data.prizes);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load prizes from database:", err);
+      } finally {
+        setIsLoadingPrizes(false);
+      }
+    }
+    loadPrizesFromDB();
+  }, []);
 
   const handleSpin = async () => {
     if (isSpinning || wonPrize) return;
@@ -114,7 +137,7 @@ export default function SpinWheelView({ user, onBack }: SpinWheelViewProps) {
         const data = await res.json();
         if (res.ok && data.voucher) {
           serverVoucher = data.voucher;
-          targetPrizeIndex = PRIZE_SEGMENTS.findIndex(
+          targetPrizeIndex = prizes.findIndex(
             (s) => s.id === data.voucher.prizeId
           );
         } else {
@@ -124,7 +147,7 @@ export default function SpinWheelView({ user, onBack }: SpinWheelViewProps) {
         }
       }
 
-      const totalSegments = PRIZE_SEGMENTS.length;
+      const totalSegments = prizes.length;
       const segmentAngle = 360 / totalSegments;
 
       const winningIndex =
@@ -140,15 +163,22 @@ export default function SpinWheelView({ user, onBack }: SpinWheelViewProps) {
       spinCountRef.current += 1;
       setRotation(finalAngle);
 
-      const chosenSegment = PRIZE_SEGMENTS[winningIndex];
+      const chosenSegment = prizes[winningIndex];
       const finalCode =
         serverVoucher?.uniqueCode ||
         `${chosenSegment.codePrefix}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
+      // Update T&C and Label from database if returned by server
+      const updatedSegment: PrizeSegment = {
+        ...chosenSegment,
+        label: serverVoucher?.prizeName || chosenSegment.label,
+        tnc: serverVoucher?.termsConditions || chosenSegment.tnc,
+      };
+
       setTimeout(() => {
         setIsSpinning(false);
         setWonPrize({
-          segment: chosenSegment,
+          segment: updatedSegment,
           uniqueCode: finalCode,
         });
 
@@ -285,8 +315,8 @@ export default function SpinWheelView({ user, onBack }: SpinWheelViewProps) {
                 }}
               >
                 <svg viewBox="0 0 300 300" className="w-full h-full">
-                  {PRIZE_SEGMENTS.map((seg, idx) => {
-                    const total = PRIZE_SEGMENTS.length;
+                  {prizes.map((seg, idx) => {
+                    const total = prizes.length;
                     const angle = 360 / total;
                     const startAngle = idx * angle - 90 - angle / 2;
                     const endAngle = startAngle + angle;
@@ -399,8 +429,7 @@ export default function SpinWheelView({ user, onBack }: SpinWheelViewProps) {
 
                 {/* T&C Details */}
                 <p className="text-[11px] font-semibold text-[#111111]/80 mt-2 leading-tight">
-                  {wonPrize.segment.tnc} Valid only at{" "}
-                  <strong className="text-[#111111]">Gong Cha Central Park (UG Floor)</strong>.
+                  {wonPrize.segment.tnc}
                 </p>
               </div>
 

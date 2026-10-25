@@ -28,14 +28,14 @@ CREATE TABLE prizes (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 4. Seed Data 6 Hadiah Resmi Gong Cha
+-- 4. Seed Data 6 Hadiah Resmi Gong Cha (Bisa di-custom di Supabase Table Editor)
 INSERT INTO prizes (id, name, short_label, color, text_color, code_prefix, terms_conditions, probability_weight) VALUES
-('FREE_PMT', 'FREE PEARL MILK TEA', 'FREE DRINK', '#C8202F', '#F5F2E8', 'GC-PMT', 'Valid for 1 Regular Pearl Milk Tea at Gong Cha Central Park.', 10),
-('BOGO', 'BUY 1 GET 1 FREE', 'BUY 1 GET 1', '#F5F2E8', '#111111', 'GC-BOGO', 'Buy any Large drink and get 1 Regular Milk Tea Series for free.', 20),
-('DISC_50', '50% OFF SECOND CUP', '50% OFF', '#F39C12', '#111111', 'GC-50OFF', '50% discount on your second cup (any series) in a single receipt.', 25),
-('FREE_UPSIZE', 'FREE LARGE UPSIZE', 'FREE UPSIZE', '#F5F2E8', '#111111', 'GC-UPSZ', 'Free upgrade from Regular to Large on any Gong Cha drink.', 20),
-('VOUCHER_15K', 'IDR 15K CASHBACK', 'IDR 15K OFF', '#C8202F', '#F5F2E8', 'GC-15K', 'IDR 15,000 off with a minimum purchase of IDR 50,000.', 15),
-('FREE_TOPPING', 'FREE TOPPING', 'FREE TOPPING', '#F39C12', '#111111', 'GC-TOP', 'Free Pearl or Milk Foam topping with any drink purchase.', 10);
+('FREE_PMT', 'FREE PEARL MILK TEA', 'FREE DRINK', '#C8202F', '#F5F2E8', 'GC-PMT', 'Valid for 1 Regular Pearl Milk Tea. Valid only at Gong Cha Central Park (UG Floor).', 10),
+('BOGO', 'BUY 1 GET 1 FREE', 'BUY 1 GET 1', '#F5F2E8', '#111111', 'GC-BOGO', 'Buy any Large drink and get 1 Regular free. Valid only at Gong Cha Central Park (UG Floor).', 20),
+('DISC_50', '50% OFF SECOND CUP', '50% OFF', '#F39C12', '#111111', 'GC-50OFF', '50% discount on second cup in single receipt. Valid only at Gong Cha Central Park (UG Floor).', 25),
+('FREE_UPSIZE', 'FREE LARGE UPSIZE', 'FREE UPSIZE', '#F5F2E8', '#111111', 'GC-UPSZ', 'Free upgrade from Regular to Large. Valid only at Gong Cha Central Park (UG Floor).', 20),
+('VOUCHER_15K', 'IDR 15K CASHBACK', 'IDR 15K OFF', '#C8202F', '#F5F2E8', 'GC-15K', 'IDR 15,000 off min purchase IDR 50,000. Valid only at Gong Cha Central Park (UG Floor).', 15),
+('FREE_TOPPING', 'FREE TOPPING', 'FREE TOPPING', '#F39C12', '#111111', 'GC-TOP', 'Free Pearl or Milk Foam topping. Valid only at Gong Cha Central Park (UG Floor).', 10);
 
 -- 5. Tabel Data Pengunjung (Leads)
 CREATE TABLE guest_users (
