@@ -380,8 +380,8 @@ export default function HomePage() {
               </header>
 
               {/* Mascot Animated Video Artwork */}
-              <div className="w-full flex items-center justify-center my-3 pointer-events-none select-none">
-                <div className="relative w-[280px] aspect-[510/600]">
+              <div className="w-full flex items-center justify-center my-2 pointer-events-none select-none">
+                <div className="relative w-[280px] aspect-[510/690]">
                   <video
                     src="/hero-mascot.mp4"
                     autoPlay
@@ -475,7 +475,7 @@ export default function HomePage() {
 
             {/* 2. Center Animated Mascot Video Artwork */}
             <div className="w-full flex items-center justify-center my-1 pointer-events-none select-none">
-              <div className="relative w-[235px] sm:w-[260px] aspect-[510/600]">
+              <div className="relative w-[235px] sm:w-[260px] aspect-[510/690]">
                 <video
                   src="/hero-mascot.mp4"
                   autoPlay
