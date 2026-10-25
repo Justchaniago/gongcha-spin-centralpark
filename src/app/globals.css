@@ -43,3 +43,26 @@ body {
   animation: fadeInBackdrop 250ms ease-out forwards;
   will-change: opacity;
 }
+
+@keyframes retroFloatSway {
+  0% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-5px) rotate(0.8deg);
+  }
+  50% {
+    transform: translateY(-9px) rotate(0deg);
+  }
+  75% {
+    transform: translateY(-4px) rotate(-0.8deg);
+  }
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+}
+
+.animate-mascot-float {
+  animation: retroFloatSway 4.2s ease-in-out infinite;
+  will-change: transform;
+}

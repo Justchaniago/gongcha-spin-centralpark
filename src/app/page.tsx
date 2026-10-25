@@ -381,14 +381,14 @@ export default function HomePage() {
 
               {/* Mascot Hero Artwork */}
               <div className="w-full flex items-center justify-center my-3 pointer-events-none select-none">
-                <div className="relative w-[280px] aspect-[1200/1408]">
+                <div className="relative w-[280px] aspect-[1200/1408] animate-mascot-float">
                   <Image
                     src="/hero-gongcha.png"
                     alt="Gong Cha Grand Opening Mascots"
                     fill
                     priority
                     sizes="280px"
-                    className="object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.08)]"
+                    className="object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.12)]"
                   />
                 </div>
               </div>
@@ -475,14 +475,14 @@ export default function HomePage() {
 
             {/* 2. Center Hero Artwork */}
             <div className="w-full flex items-center justify-center my-1 pointer-events-none select-none">
-              <div className="relative w-[235px] sm:w-[260px] aspect-[1200/1408]">
+              <div className="relative w-[235px] sm:w-[260px] aspect-[1200/1408] animate-mascot-float">
                 <Image
                   src="/hero-gongcha.png"
                   alt="Gong Cha Grand Opening Mascots"
                   fill
                   priority
                   sizes="(max-width: 640px) 235px, 260px"
-                  className="object-contain drop-shadow-[0_6px_12px_rgba(0,0,0,0.06)]"
+                  className="object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.1)]"
                 />
               </div>
             </div>
