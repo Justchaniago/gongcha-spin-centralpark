@@ -217,190 +217,213 @@ export default function SpinWheelView({ user, onBack }: SpinWheelViewProps) {
   };
 
   return (
-    <div className="w-full max-w-[380px] flex-1 flex flex-col items-center justify-between py-1 px-1 select-none">
+    <div className="w-full max-w-[380px] lg:max-w-full flex-1 flex flex-col items-center justify-between py-1 px-1 select-none">
       {/* 1. Header Area with compact spacing */}
-      <header className="w-full text-center flex flex-col items-center relative">
+      <header className="w-full text-center flex flex-col items-center relative mb-2">
         {!isSpinning && !wonPrize && (
           <button
             type="button"
             onClick={onBack}
-            className="absolute left-0 top-0.5 w-8 h-8 rounded-full border-2 border-[#111111] flex items-center justify-center bg-[#F5F2E8] active:translate-y-0.5 cursor-pointer"
+            className="absolute left-0 top-0.5 w-8 h-8 rounded-full border-2 border-[#111111] flex items-center justify-center bg-[#F5F2E8] active:translate-y-0.5 cursor-pointer shadow-[2px_2px_0px_#111111]"
             aria-label="Back"
           >
             <ArrowLeft className="w-4 h-4 stroke-[2.5]" />
           </button>
         )}
 
-        <p className="text-[11px] font-extrabold tracking-[0.2em] uppercase text-[#111111] mb-0.5">
+        <p className="text-[11px] lg:text-[12px] font-extrabold tracking-[0.2em] uppercase text-[#111111] mb-0.5">
           GONG CHA • <span className="text-[#C8202F]">CENTRAL PARK</span>
         </p>
         <h1
           className={`font-display uppercase text-[#111111] transition-all duration-300 leading-[0.88] ${
-            wonPrize ? "text-[40px]" : "text-[54px] sm:text-[58px]"
+            wonPrize ? "text-[38px] lg:text-[46px]" : "text-[52px] sm:text-[56px] lg:text-[62px]"
           }`}
         >
           {wonPrize ? "VOUCHER UNLOCKED!" : "SPIN TO WIN"}
         </h1>
-        <p className="text-[12px] font-bold text-[#111111]/75 mt-1">
+        <p className="text-[12px] lg:text-[13px] font-bold text-[#111111]/75 mt-1">
           {wonPrize
             ? `Congrats, ${user.name.split(" ")[0]}! Present your voucher at the cashier.`
             : `Hi ${user.name.split(" ")[0]}, tap spin to reveal your exclusive prize!`}
         </p>
       </header>
 
-      {/* 2. Wheel Container (Auto scales down slightly when prize is won to avoid screen clipping) */}
-      <div
-        className={`relative flex items-center justify-center transition-all duration-300 ${
-          wonPrize ? "my-1 scale-[0.74] sm:scale-[0.82] origin-top" : "my-2.5 scale-100"
-        }`}
-      >
-        {/* Top Pointer */}
-        <div className="absolute -top-3.5 z-30 drop-shadow-[0_2px_0_#111111]">
-          <svg width="32" height="34" viewBox="0 0 36 38" fill="none">
-            <path
-              d="M18 36L3 6C1.8 3.6 3.5 1 6.2 1H29.8C32.5 1 34.2 3.6 33 6L18 36Z"
-              fill="#C8202F"
-              stroke="#111111"
-              strokeWidth="3"
-            />
-            <circle cx="18" cy="11" r="3.5" fill="#F5F2E8" stroke="#111111" strokeWidth="2" />
-          </svg>
-        </div>
+      {/* Responsive Layout Body: Mobile is vertical stack, Desktop (lg:) is 2 columns (Left: Wheel, Right: Action/Voucher) */}
+      <div className="w-full flex flex-col lg:grid lg:grid-cols-12 lg:gap-8 lg:items-center">
 
-        {/* Outer Rim */}
-        <div className="w-[285px] h-[285px] sm:w-[310px] sm:h-[310px] rounded-full bg-[#111111] p-2 shadow-[5px_5px_0px_#111111] relative flex items-center justify-center">
+        {/* Column Left (Desktop): Wheel Container */}
+        <div className="w-full lg:col-span-6 flex flex-col items-center justify-center">
           <div
-            className="w-full h-full rounded-full overflow-hidden border-[2.5px] border-[#F5F2E8] relative"
-            style={{
-              transform: `rotate(${rotation}deg)`,
-              transition: isSpinning
-                ? "transform 4.7s cubic-bezier(0.14, 0.85, 0.18, 1)"
-                : "none",
-            }}
+            className={`relative flex items-center justify-center transition-all duration-300 ${
+              wonPrize
+                ? "my-1 scale-[0.74] sm:scale-[0.82] lg:scale-100 origin-top"
+                : "my-2.5 scale-100"
+            }`}
           >
-            <svg viewBox="0 0 300 300" className="w-full h-full">
-              {PRIZE_SEGMENTS.map((seg, idx) => {
-                const total = PRIZE_SEGMENTS.length;
-                const angle = 360 / total;
-                const startAngle = idx * angle - 90 - angle / 2;
-                const endAngle = startAngle + angle;
-
-                const startRad = (startAngle * Math.PI) / 180;
-                const endRad = (endAngle * Math.PI) / 180;
-
-                const x1 = 150 + 150 * Math.cos(startRad);
-                const y1 = 150 + 150 * Math.sin(startRad);
-                const x2 = 150 + 150 * Math.cos(endRad);
-                const y2 = 150 + 150 * Math.sin(endRad);
-
-                const pathData = `M 150 150 L ${x1} ${y1} A 150 150 0 0 1 ${x2} ${y2} Z`;
-                const textRotation = idx * angle;
-
-                return (
-                  <g key={seg.id}>
-                    <path
-                      d={pathData}
-                      fill={seg.color}
-                      stroke="#111111"
-                      strokeWidth="3"
-                    />
-                    <g transform={`translate(150, 150) rotate(${textRotation})`}>
-                      <text
-                        x="0"
-                        y="-90"
-                        fill={seg.textColor}
-                        textAnchor="middle"
-                        className="font-display text-[15px] tracking-wider uppercase"
-                        style={{ fontFamily: "var(--font-anton), sans-serif" }}
-                      >
-                        {seg.shortLabel}
-                      </text>
-                    </g>
-                  </g>
-                );
-              })}
-            </svg>
-          </div>
-
-          {/* Center Hub */}
-          <div className="absolute w-14 h-14 rounded-full bg-[#F5F2E8] border-[2.5px] border-[#111111] shadow-[2px_2px_0px_#111111] flex flex-col items-center justify-center z-20">
-            <div className="w-9 h-9 rounded-full bg-[#C8202F] border-2 border-[#111111] flex items-center justify-center">
-              <span className="font-display text-[10px] text-[#F5F2E8] tracking-wider leading-none text-center">
-                GONG
-                <br />
-                CHA
-              </span>
+            {/* Top Pointer */}
+            <div className="absolute -top-3.5 z-30 drop-shadow-[0_2px_0_#111111]">
+              <svg width="32" height="34" viewBox="0 0 36 38" fill="none">
+                <path
+                  d="M18 36L3 6C1.8 3.6 3.5 1 6.2 1H29.8C32.5 1 34.2 3.6 33 6L18 36Z"
+                  fill="#C8202F"
+                  stroke="#111111"
+                  strokeWidth="3"
+                />
+                <circle cx="18" cy="11" r="3.5" fill="#F5F2E8" stroke="#111111" strokeWidth="2" />
+              </svg>
             </div>
-          </div>
-        </div>
-      </div>
 
-      {/* 3. Bottom Action or Won Voucher Card */}
-      <div className="w-full flex flex-col items-center mt-1">
-        {!wonPrize ? (
-          <button
-            type="button"
-            disabled={isSpinning}
-            onClick={handleSpin}
-            className="w-full py-4 bg-[#C8202F] hover:bg-[#A81926] disabled:opacity-60 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_#111111] text-[#F5F2E8] font-display text-[24px] tracking-[0.06em] uppercase rounded-2xl border-[2.5px] border-[#111111] shadow-[4px_4px_0px_#111111] transition-all cursor-pointer touch-manipulation"
-          >
-            {isSpinning ? "SPINNING..." : "SPIN THE WHEEL"}
-          </button>
-        ) : (
-          /* Won Voucher Card Presentation */
-          <div className="w-full flex flex-col items-center space-y-2.5">
-            {/* The Downloadable Card */}
-            <div
-              ref={voucherCardRef}
-              className="w-full bg-white rounded-2xl border-[2.5px] border-[#111111] shadow-[5px_5px_0px_#111111] p-4 text-left relative overflow-hidden"
-            >
-              {/* Top Meta */}
-              <div className="flex items-center justify-between border-b-2 border-dashed border-[#111111]/20 pb-2 mb-2.5">
-                <div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[#C8202F]">
-                    EXCLUSIVE VOUCHER REWARD
+            {/* Outer Rim */}
+            <div className="w-[285px] h-[285px] sm:w-[310px] sm:h-[310px] lg:w-[330px] lg:h-[330px] rounded-full bg-[#111111] p-2 shadow-[5px_5px_0px_#111111] relative flex items-center justify-center">
+              <div
+                className="w-full h-full rounded-full overflow-hidden border-[2.5px] border-[#F5F2E8] relative"
+                style={{
+                  transform: `rotate(${rotation}deg)`,
+                  transition: isSpinning
+                    ? "transform 4.7s cubic-bezier(0.14, 0.85, 0.18, 1)"
+                    : "none",
+                }}
+              >
+                <svg viewBox="0 0 300 300" className="w-full h-full">
+                  {PRIZE_SEGMENTS.map((seg, idx) => {
+                    const total = PRIZE_SEGMENTS.length;
+                    const angle = 360 / total;
+                    const startAngle = idx * angle - 90 - angle / 2;
+                    const endAngle = startAngle + angle;
+
+                    const startRad = (startAngle * Math.PI) / 180;
+                    const endRad = (endAngle * Math.PI) / 180;
+
+                    const x1 = 150 + 150 * Math.cos(startRad);
+                    const y1 = 150 + 150 * Math.sin(startRad);
+                    const x2 = 150 + 150 * Math.cos(endRad);
+                    const y2 = 150 + 150 * Math.sin(endRad);
+
+                    const pathData = `M 150 150 L ${x1} ${y1} A 150 150 0 0 1 ${x2} ${y2} Z`;
+                    const textRotation = idx * angle;
+
+                    return (
+                      <g key={seg.id}>
+                        <path
+                          d={pathData}
+                          fill={seg.color}
+                          stroke="#111111"
+                          strokeWidth="3"
+                        />
+                        <g transform={`translate(150, 150) rotate(${textRotation})`}>
+                          <text
+                            x="0"
+                            y="-90"
+                            fill={seg.textColor}
+                            textAnchor="middle"
+                            className="font-display text-[15px] tracking-wider uppercase"
+                            style={{ fontFamily: "var(--font-anton), sans-serif" }}
+                          >
+                            {seg.shortLabel}
+                          </text>
+                        </g>
+                      </g>
+                    );
+                  })}
+                </svg>
+              </div>
+
+              {/* Center Hub */}
+              <div className="absolute w-14 h-14 rounded-full bg-[#F5F2E8] border-[2.5px] border-[#111111] shadow-[2px_2px_0px_#111111] flex flex-col items-center justify-center z-20">
+                <div className="w-9 h-9 rounded-full bg-[#C8202F] border-2 border-[#111111] flex items-center justify-center">
+                  <span className="font-display text-[10px] text-[#F5F2E8] tracking-wider leading-none text-center">
+                    GONG
+                    <br />
+                    CHA
                   </span>
-                  <h3 className="font-display text-[26px] leading-[0.95] text-[#111111] uppercase mt-0.5">
-                    {wonPrize.segment.label}
-                  </h3>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
 
-              {/* Unique Code Box */}
-              <div className="bg-[#FAF5EB] rounded-xl border-2 border-[#111111] p-3 text-center my-1">
-                <p className="text-[10px] font-black uppercase tracking-wider text-[#111111]/60">
-                  UNIQUE VOUCHER CODE
-                </p>
-                <p className="font-mono text-[22px] font-black tracking-widest text-[#111111] mt-0.5 select-all">
-                  {wonPrize.uniqueCode}
+        {/* Column Right (Desktop): Spin Action or Claim Voucher Card */}
+        <div className="w-full lg:col-span-6 flex flex-col items-center mt-1 lg:mt-0">
+          {!wonPrize ? (
+            <div className="w-full flex flex-col items-center space-y-4">
+              <div className="hidden lg:block w-full bg-white/70 border-2 border-[#111111] rounded-2xl p-5 shadow-[4px_4px_0px_#111111] text-left">
+                <span className="text-[10px] font-black uppercase tracking-widest text-[#C8202F]">
+                  READY TO SPIN
+                </span>
+                <h3 className="font-display text-[26px] uppercase text-[#111111] leading-tight mt-1">
+                  TRY YOUR LUCK NOW!
+                </h3>
+                <p className="text-xs font-semibold text-[#111111]/70 mt-1 leading-relaxed">
+                  Every spin is guaranteed to win an exclusive Gong Cha Grand Opening voucher. Valid for dine-in & takeaway.
                 </p>
               </div>
 
-              {/* T&C Details */}
-              <p className="text-[11px] font-semibold text-[#111111]/80 mt-2 leading-tight">
-                {wonPrize.segment.tnc} Valid only at{" "}
-                <strong className="text-[#111111]">Gong Cha Central Park (UG Floor)</strong>.
-              </p>
+              <button
+                type="button"
+                disabled={isSpinning}
+                onClick={handleSpin}
+                className="w-full py-4 bg-[#C8202F] hover:bg-[#A81926] disabled:opacity-60 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_#111111] text-[#F5F2E8] font-display text-[24px] tracking-[0.06em] uppercase rounded-2xl border-[2.5px] border-[#111111] shadow-[4px_4px_0px_#111111] transition-all cursor-pointer touch-manipulation"
+              >
+                {isSpinning ? "SPINNING..." : "SPIN THE WHEEL"}
+              </button>
             </div>
+          ) : (
+            /* Won Voucher Card Presentation */
+            <div className="w-full flex flex-col items-center space-y-3">
+              {/* The Downloadable Card */}
+              <div
+                ref={voucherCardRef}
+                className="w-full bg-white rounded-2xl border-[2.5px] border-[#111111] shadow-[5px_5px_0px_#111111] p-5 text-left relative overflow-hidden"
+              >
+                {/* Top Meta */}
+                <div className="flex items-center justify-between border-b-2 border-dashed border-[#111111]/20 pb-2 mb-2.5">
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-[#C8202F]">
+                      EXCLUSIVE VOUCHER REWARD
+                    </span>
+                    <h3 className="font-display text-[26px] leading-[0.95] text-[#111111] uppercase mt-0.5">
+                      {wonPrize.segment.label}
+                    </h3>
+                  </div>
+                </div>
 
-            {/* Action Button: Download / Save Voucher */}
-            <button
-              type="button"
-              onClick={handleDownloadVoucher}
-              disabled={isSaving}
-              className="w-full py-3.5 bg-[#111111] hover:bg-[#222222] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_#C8202F] text-[#F5F2E8] font-display text-[18px] tracking-[0.05em] uppercase rounded-xl border-2 border-[#111111] shadow-[3px_3px_0px_#111111] transition-all cursor-pointer flex items-center justify-center gap-2"
-            >
-              <Download className="w-4 h-4 stroke-[2.5]" />
-              <span>{isSaving ? "SAVING VOUCHER..." : "SAVE / DOWNLOAD VOUCHER"}</span>
-            </button>
+                {/* Unique Code Box */}
+                <div className="bg-[#FAF5EB] rounded-xl border-2 border-[#111111] p-3 text-center my-1">
+                  <p className="text-[10px] font-black uppercase tracking-wider text-[#111111]/60">
+                    UNIQUE VOUCHER CODE
+                  </p>
+                  <p className="font-mono text-[22px] font-black tracking-widest text-[#111111] mt-0.5 select-all">
+                    {wonPrize.uniqueCode}
+                  </p>
+                </div>
 
-            {/* Helpful Helper Text for Screenshot */}
-            <div className="flex items-center justify-center gap-1.5 text-[11px] font-bold text-[#111111]/70">
-              <Camera className="w-3.5 h-3.5 text-[#C8202F] shrink-0" />
-              <span>You can also take a screenshot of this voucher!</span>
+                {/* T&C Details */}
+                <p className="text-[11px] font-semibold text-[#111111]/80 mt-2 leading-tight">
+                  {wonPrize.segment.tnc} Valid only at{" "}
+                  <strong className="text-[#111111]">Gong Cha Central Park (UG Floor)</strong>.
+                </p>
+              </div>
+
+              {/* Action Button: Download / Save Voucher */}
+              <button
+                type="button"
+                onClick={handleDownloadVoucher}
+                disabled={isSaving}
+                className="w-full py-3.5 bg-[#111111] hover:bg-[#222222] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_#C8202F] text-[#F5F2E8] font-display text-[18px] tracking-[0.05em] uppercase rounded-xl border-2 border-[#111111] shadow-[3px_3px_0px_#111111] transition-all cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Download className="w-4 h-4 stroke-[2.5]" />
+                <span>{isSaving ? "SAVING VOUCHER..." : "SAVE / DOWNLOAD VOUCHER"}</span>
+              </button>
+
+              {/* Helpful Helper Text for Screenshot */}
+              <div className="flex items-center justify-center gap-1.5 text-[11px] font-bold text-[#111111]/70">
+                <Camera className="w-3.5 h-3.5 text-[#C8202F] shrink-0" />
+                <span>You can also take a screenshot of this voucher!</span>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
+
       </div>
     </div>
   );

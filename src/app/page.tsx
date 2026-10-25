@@ -392,9 +392,9 @@ export default function HomePage() {
         </div>
       ) : (
         registeredUser && (
-          <div className="w-full flex-1 flex flex-col items-center justify-center">
+          <div className="w-full flex-1 flex flex-col items-center justify-center my-auto">
             {/* Modal Dialog container for desktop / full view for mobile */}
-            <div className="w-full max-w-[420px] lg:bg-[#EDE8D8]/90 lg:p-6 lg:rounded-[32px] lg:border-[3px] lg:border-[#111111] lg:shadow-[8px_8px_0px_#111111]">
+            <div className="w-full max-w-[380px] lg:max-w-[880px] lg:bg-[#EDE8D8]/95 lg:p-8 lg:rounded-[36px] lg:border-[3px] lg:border-[#111111] lg:shadow-[8px_8px_0px_#111111]">
               <SpinWheelView
                 user={registeredUser}
                 onBack={() => setStep("landing")}
