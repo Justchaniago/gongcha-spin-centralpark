@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { supabaseAdmin } from "@/lib/supabase";
+import { sendVoucherEmail } from "@/lib/email";
 
 const SpinSchema = z.object({
   userId: z.string().uuid("Invalid user session"),
@@ -115,14 +116,15 @@ export async function POST(req: NextRequest) {
     const voucherId = vObj.id;
     const uniqueCode = vObj.unique_code;
 
-    // Fetch user full_name for recording
+    // Fetch user full_name & email for recording and notification
     const { data: uData } = await supabaseAdmin
       .from("guest_users")
-      .select("full_name")
+      .select("full_name, email")
       .eq("id", userId)
       .maybeSingle();
 
     const userFullName = uData?.full_name || "Guest";
+    const userEmail = uData?.email;
 
     // Step B: Mark voucher as ASSIGNED
     const { error: assignError } = await supabaseAdmin
@@ -152,6 +154,19 @@ export async function POST(req: NextRequest) {
         prize_id: finalPrizeId,
         voucher_code_id: voucherId,
       });
+
+    // Step D: Asynchronously dispatch voucher email via Resend (Non-blocking)
+    if (userEmail) {
+      sendVoucherEmail({
+        to: userEmail,
+        userName: userFullName,
+        voucherCode: uniqueCode,
+        prizeName: finalPrizeName || "Voucher Gong cha",
+        termsConditions: finalTnc,
+      }).catch((emailErr) => {
+        console.error("[Email Dispatch Background Error]:", emailErr);
+      });
+    }
 
     return NextResponse.json({
       status: "SUCCESS",
