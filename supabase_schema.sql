@@ -67,6 +67,7 @@ CREATE INDEX idx_vouchers_code ON voucher_codes (unique_code);
 CREATE TABLE spin_transactions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES guest_users(id) ON DELETE CASCADE,
+    full_name VARCHAR(150),
     prize_id VARCHAR(50) NOT NULL REFERENCES prizes(id),
     voucher_code_id BIGINT NOT NULL REFERENCES voucher_codes(id),
     spun_at TIMESTAMPTZ DEFAULT NOW(),
@@ -167,9 +168,11 @@ BEGIN
         assigned_at = NOW()
     WHERE id = v_voucher_id;
 
-    -- 6. Rekam data transaksi spin
-    INSERT INTO spin_transactions (user_id, prize_id, voucher_code_id)
-    VALUES (p_user_id, v_final_prize_id, v_voucher_id);
+    -- 6. Rekam data transaksi spin (termasuk nama pengunjung)
+    INSERT INTO spin_transactions (user_id, full_name, prize_id, voucher_code_id)
+    SELECT p_user_id, gu.full_name, v_final_prize_id, v_voucher_id
+    FROM guest_users gu
+    WHERE gu.id = p_user_id;
 
     -- 7. Ambil info nama hadiah dan S&K
     SELECT name, terms_conditions INTO v_prize_name, v_tnc

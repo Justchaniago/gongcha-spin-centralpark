@@ -1,22 +1,31 @@
-import type { Metadata } from "next";
-import { Anton, Plus_Jakarta_Sans } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Vidaloka, Public_Sans } from "next/font/google";
 import "./globals.css";
 
-const anton = Anton({
-  variable: "--font-anton",
+const vidaloka = Vidaloka({
+  variable: "--font-vidaloka",
   subsets: ["latin"],
   weight: ["400"],
+  display: "swap",
 });
 
-const jakarta = Plus_Jakarta_Sans({
-  variable: "--font-jakarta",
+const publicSans = Public_Sans({
+  variable: "--font-public-sans",
   subsets: ["latin"],
-  weight: ["500", "700", "800"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Gong Cha Central Park — Grand Opening",
-  description: "Claim your exclusive Gong Cha Central Park Grand Opening voucher.",
+  title: "Gong cha Central Park — Grand Opening",
+  description: "Claim your exclusive Gong cha Central Park Grand Opening voucher.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({
@@ -27,9 +36,9 @@ export default function RootLayout({
   return (
     <html
       lang="id"
-      className={`${anton.variable} ${jakarta.variable} h-full antialiased`}
+      className={`${vidaloka.variable} ${publicSans.variable} h-full antialiased`}
     >
-      <body className="min-h-full bg-[#F5F2E8] text-[#111111]">
+      <body className="min-h-full bg-[#F6F1E6] text-[#382F2D] selection:bg-[#F1D09F] selection:text-[#C10230]">
         {children}
       </body>
     </html>

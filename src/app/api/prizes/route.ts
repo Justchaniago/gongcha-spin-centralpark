@@ -7,7 +7,7 @@ export async function GET() {
       .from("prizes")
       .select("id, name, short_label, color, text_color, code_prefix, terms_conditions, probability_weight")
       .eq("is_active", true)
-      .order("id", { ascending: true });
+      .order("probability_weight", { ascending: false });
 
     if (error || !prizes || prizes.length === 0) {
       console.error("Fetch prizes error:", error);

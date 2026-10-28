@@ -3,9 +3,16 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/lib/supabase";
 
 const RegisterSchema = z.object({
-  fullName: z.string().min(2, "Full name must be at least 2 characters"),
-  whatsapp: z.string().min(9, "Invalid WhatsApp number").max(16, "Invalid WhatsApp number"),
-  email: z.string().email("Invalid email address"),
+  fullName: z
+    .string()
+    .min(2, "Full name must be at least 2 characters")
+    .max(60, "Name is too long")
+    .regex(/^[a-zA-Z0-9\s'.-]+$/, "Name contains invalid characters"),
+  whatsapp: z
+    .string()
+    .min(9, "Invalid WhatsApp number")
+    .max(16, "Invalid WhatsApp number"),
+  email: z.string().email("Invalid email address").max(100, "Email is too long"),
 });
 
 export async function POST(req: NextRequest) {

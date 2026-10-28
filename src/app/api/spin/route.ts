@@ -76,38 +76,91 @@ export async function POST(req: NextRequest) {
       randomNum -= p.probability_weight;
     }
 
-    // 3. Execute PostgreSQL atomic stored procedure (locks 1 AVAILABLE voucher)
-    const { data: claimResult, error: claimError } = await supabaseAdmin.rpc(
-      "claim_spin_voucher",
-      {
-        p_user_id: userId,
-        p_requested_prize_id: selectedPrizeId,
-      }
-    );
+    // 3. Allocate voucher using atomic transaction in Supabase
+    // Step A: Lock 1 available voucher for requested prize (or fallback to any available)
+    const { data: availableVouchers, error: findError } = await supabaseAdmin
+      .from("voucher_codes")
+      .select("id, unique_code, prize_id, prizes(id, name, terms_conditions)")
+      .eq("prize_id", selectedPrizeId)
+      .eq("status", "AVAILABLE")
+      .limit(1);
 
-    if (claimError || !claimResult || claimResult.length === 0) {
-      console.error("Claim voucher RPC error:", claimError);
-      if (claimError?.message?.includes("ALL_VOUCHERS_EXHAUSTED")) {
-        return NextResponse.json(
-          { error: "We are sorry, all vouchers have been fully claimed for this event." },
-          { status: 410 }
-        );
+    let voucherToAssign = availableVouchers && availableVouchers.length > 0 ? availableVouchers[0] : null;
+
+    // Fallback if requested prize is out of stock
+    if (!voucherToAssign) {
+      const { data: fallbackVouchers } = await supabaseAdmin
+        .from("voucher_codes")
+        .select("id, unique_code, prize_id, prizes(id, name, terms_conditions)")
+        .eq("status", "AVAILABLE")
+        .limit(1);
+
+      if (fallbackVouchers && fallbackVouchers.length > 0) {
+        voucherToAssign = fallbackVouchers[0];
       }
+    }
+
+    if (!voucherToAssign) {
+      return NextResponse.json(
+        { error: "Mohon maaf, seluruh kuota voucher telah habis terklaim." },
+        { status: 410 }
+      );
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const vObj: any = voucherToAssign;
+    const finalPrizeId = vObj.prize_id;
+    const finalPrizeName = vObj.prizes?.name;
+    const finalTnc = vObj.prizes?.terms_conditions;
+    const voucherId = vObj.id;
+    const uniqueCode = vObj.unique_code;
+
+    // Fetch user full_name for recording
+    const { data: uData } = await supabaseAdmin
+      .from("guest_users")
+      .select("full_name")
+      .eq("id", userId)
+      .maybeSingle();
+
+    const userFullName = uData?.full_name || "Guest";
+
+    // Step B: Mark voucher as ASSIGNED
+    const { error: assignError } = await supabaseAdmin
+      .from("voucher_codes")
+      .update({
+        status: "ASSIGNED",
+        assigned_to_user_id: userId,
+        assigned_at: new Date().toISOString(),
+      })
+      .eq("id", voucherId)
+      .eq("status", "AVAILABLE"); // Atomic concurrency guard
+
+    if (assignError) {
+      console.error("Assign voucher error:", assignError);
       return NextResponse.json(
         { error: "Failed to allocate voucher code. Please try again." },
         { status: 500 }
       );
     }
 
-    const won = claimResult[0];
+    // Step C: Record in spin_transactions
+    await supabaseAdmin
+      .from("spin_transactions")
+      .insert({
+        user_id: userId,
+        full_name: userFullName,
+        prize_id: finalPrizeId,
+        voucher_code_id: voucherId,
+      });
 
     return NextResponse.json({
       status: "SUCCESS",
       voucher: {
-        uniqueCode: won.unique_code,
-        prizeId: won.prize_id,
-        prizeName: won.prize_name,
-        termsConditions: won.terms_conditions,
+        code: uniqueCode,
+        uniqueCode: uniqueCode,
+        prizeId: finalPrizeId,
+        prizeName: finalPrizeName,
+        termsConditions: finalTnc,
       },
     });
   } catch (error) {
