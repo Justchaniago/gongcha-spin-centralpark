@@ -4,19 +4,19 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import {
   Camera,
-  CheckCircle2,
-  XCircle,
-  AlertTriangle,
-  RotateCcw,
-  Zap,
-  Clock,
-  History,
+  CameraOff,
   Check,
-  User,
-  Phone,
-  Gift,
+  X,
+  AlertCircle,
+  RotateCcw,
   Volume2,
   VolumeX,
+  LogOut,
+  Search,
+  Delete,
+  ArrowRight,
+  Clock,
+  TicketCheck,
 } from "lucide-react";
 import { Html5Qrcode } from "html5-qrcode";
 
@@ -30,12 +30,14 @@ interface HistoryItem {
 }
 
 interface ScanResult {
-  type: "SUCCESS" | "ALREADY_USED" | "ERROR";
+  type: "SUCCESS" | "CHECKED_VALID" | "ALREADY_USED" | "ERROR";
   title: string;
   message: string;
   code?: string;
   prizeName?: string;
+  termsConditions?: string;
   guestName?: string;
+  whatsapp?: string;
   redeemedAt?: string;
 }
 
@@ -44,7 +46,7 @@ export default function CashierPortalPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [pinError, setPinError] = useState("");
 
-  // Auto-Redeem Mode Toggle (Default ON: Instant redeem upon scan)
+  // Mode Toggle (Default ON: Instant redeem upon scan)
   const [autoRedeem, setAutoRedeem] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
 
@@ -52,37 +54,51 @@ export default function CashierPortalPage() {
   const [isScanning, setIsScanning] = useState(false);
   const [manualCode, setManualCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [historyFilter, setHistoryFilter] = useState("");
 
   // Result Banner & Real-Time History
   const [lastScanResult, setLastScanResult] = useState<ScanResult | null>(null);
   const [redeemHistory, setRedeemHistory] = useState<HistoryItem[]>([]);
+  const [totalRedeemedCount, setTotalRedeemedCount] = useState<number>(0);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const isProcessingRef = useRef(false);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   // Auto-login from localStorage if remembered
   useEffect(() => {
     const savedPin = localStorage.getItem("gongcha_cashier_pin");
-    if (savedPin) {
+    if (savedPin === "2026") {
       setPin(savedPin);
       setIsAuthenticated(true);
     }
   }, []);
 
-  const handlePinSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!pin || pin.length < 4) {
-      setPinError("Masukkan 4 digit PIN Kasir");
-      return;
-    }
-    if (pin === "2026") {
+  const verifyPin = (targetPin: string) => {
+    if (targetPin === "2026") {
       setIsAuthenticated(true);
-      localStorage.setItem("gongcha_cashier_pin", pin);
+      localStorage.setItem("gongcha_cashier_pin", targetPin);
       setPinError("");
     } else {
-      setPinError("PIN Kasir Salah");
+      setPinError("PIN Kasir tidak sesuai");
+      setTimeout(() => setPin(""), 350);
     }
+  };
+
+  const handlePinKeyPress = (digit: string) => {
+    if (pin.length >= 4) return;
+    const nextPin = pin + digit;
+    setPin(nextPin);
+    setPinError("");
+    if (nextPin.length === 4) {
+      verifyPin(nextPin);
+    }
+  };
+
+  const handlePinBackspace = () => {
+    setPin((prev) => prev.slice(0, -1));
+    setPinError("");
   };
 
   const handleLogout = () => {
@@ -103,6 +119,9 @@ export default function CashierPortalPage() {
         if (Array.isArray(data.history)) {
           setRedeemHistory(data.history);
         }
+        if (typeof data.totalRedeemed === "number") {
+          setTotalRedeemedCount(data.totalRedeemed);
+        }
       }
     } catch (err) {
       console.error("Failed to load history:", err);
@@ -114,7 +133,6 @@ export default function CashierPortalPage() {
   useEffect(() => {
     if (isAuthenticated) {
       loadHistory();
-      // Auto-poll history every 10 seconds so multi-cashiers stay in sync
       const interval = setInterval(loadHistory, 10000);
       return () => clearInterval(interval);
     }
@@ -124,35 +142,44 @@ export default function CashierPortalPage() {
   const playAudioFeedback = (type: "SUCCESS" | "ERROR") => {
     if (!soundEnabled) return;
     try {
-      const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      const ctx = new (window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext })
+          .webkitAudioContext)();
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.connect(gain);
       gain.connect(ctx.destination);
 
       if (type === "SUCCESS") {
-        // High joyful double beep
         osc.type = "sine";
         osc.frequency.setValueAtTime(880, ctx.currentTime);
-        osc.frequency.setValueAtTime(1174.66, ctx.currentTime + 0.08); // D6
-        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        osc.frequency.setValueAtTime(1174.66, ctx.currentTime + 0.08);
+        gain.gain.setValueAtTime(0.18, ctx.currentTime);
         osc.start();
         osc.stop(ctx.currentTime + 0.22);
       } else {
-        // Low alert buzz
         osc.type = "sawtooth";
         osc.frequency.setValueAtTime(220, ctx.currentTime);
-        gain.gain.setValueAtTime(0.25, ctx.currentTime);
+        gain.gain.setValueAtTime(0.22, ctx.currentTime);
         osc.start();
-        osc.stop(ctx.currentTime + 0.3);
+        osc.stop(ctx.currentTime + 0.28);
       }
     } catch {
-      // Audio context blocked
+      // Ignore if audio blocked
     }
   };
 
-  // Process Scanned Code with Auto-Redeem
-  const processVoucherCode = async (codeToCheck: string) => {
+  // Format manual code nicely as user types or pastes
+  const handleManualInputChange = (val: string) => {
+    const raw = val.toUpperCase();
+    setManualCode(raw);
+  };
+
+  // Process Scanned or Typed Code
+  const processVoucherCode = async (
+    codeToCheck: string,
+    forceRedeem = false
+  ) => {
     if (isProcessingRef.current) return;
     isProcessingRef.current = true;
 
@@ -163,6 +190,7 @@ export default function CashierPortalPage() {
     }
 
     setIsLoading(true);
+    const shouldRedeem = forceRedeem || autoRedeem;
 
     try {
       const res = await fetch("/api/cashier", {
@@ -171,27 +199,26 @@ export default function CashierPortalPage() {
         body: JSON.stringify({
           pin,
           code,
-          action: autoRedeem ? "redeem" : "check",
-          autoRedeem,
+          action: shouldRedeem ? "redeem" : "check",
+          autoRedeem: shouldRedeem,
         }),
       });
 
       const data = await res.json();
 
       if (res.ok && data.status === "REDEEMED_SUCCESS") {
-        // SUCCESSFUL INSTANT REDEEM
         playAudioFeedback("SUCCESS");
         setLastScanResult({
           type: "SUCCESS",
-          title: "VOUCHER BERHASIL DI-REDEEM!",
-          message: "Status voucher otomatis ditandai TERPAKAI di database.",
+          title: "Berhasil Ditukarkan",
+          message: "Voucher telah ditandai TERPAKAI di sistem.",
           code: data.voucher.code,
           prizeName: data.voucher.prizeName,
           guestName: data.voucher.guestName,
+          whatsapp: data.voucher.whatsapp,
           redeemedAt: data.voucher.redeemedAt,
         });
 
-        // Prepend to history table immediately
         setRedeemHistory((prev) => [
           {
             id: data.voucher.id || Date.now(),
@@ -201,28 +228,42 @@ export default function CashierPortalPage() {
             whatsapp: data.voucher.whatsapp,
             redeemedAt: data.voucher.redeemedAt,
           },
-          ...prev,
+          ...prev.filter((item) => item.code !== data.voucher.code),
         ]);
+        setTotalRedeemedCount((prev) => prev + 1);
+        setManualCode("");
+      } else if (res.ok && data.status === "CHECKED") {
+        playAudioFeedback("SUCCESS");
+        setLastScanResult({
+          type: "CHECKED_VALID",
+          title: "Voucher Aktif & Valid",
+          message: "Siap ditukarkan. Klik tombol di bawah untuk konfirmasi redeem.",
+          code: data.voucher.code,
+          prizeName: data.voucher.prizeName,
+          termsConditions: data.voucher.termsConditions,
+          guestName: data.voucher.guestName,
+          whatsapp: data.voucher.whatsapp,
+        });
         setManualCode("");
       } else if (res.status === 409 || data.status === "ALREADY_REDEEMED") {
-        // ALREADY REDEEMED ALERT
         playAudioFeedback("ERROR");
         setLastScanResult({
           type: "ALREADY_USED",
-          title: "PERINGATAN: VOUCHER SUDAH PERNAH DIGUNAKAN!",
-          message: data.message || "Voucher ini sudah ditukarkan sebelumnya.",
+          title: "Sudah Pernah Digunakan",
+          message: data.message || "Voucher ini telah ditukarkan sebelumnya.",
           code: data.voucher?.code || code,
           prizeName: data.voucher?.prizeName,
           guestName: data.voucher?.guestName,
+          whatsapp: data.voucher?.whatsapp,
           redeemedAt: data.voucher?.redeemedAt,
         });
       } else {
-        // NOT FOUND / INVALID
         playAudioFeedback("ERROR");
         setLastScanResult({
           type: "ERROR",
-          title: "VOUCHER TIDAK VALID",
-          message: data.error || "Kode voucher tidak ditemukan dalam database.",
+          title: "Tidak Ditemukan / Tidak Valid",
+          message:
+            data.error || "Kode voucher tidak terdaftar atau belum diklaim.",
           code,
         });
       }
@@ -231,20 +272,19 @@ export default function CashierPortalPage() {
       playAudioFeedback("ERROR");
       setLastScanResult({
         type: "ERROR",
-        title: "KONEKSI GAGAL",
-        message: "Periksa sambungan internet kasir.",
+        title: "Gangguan Koneksi",
+        message: "Gagal menghubungi server. Periksa koneksi internet perangkat.",
         code,
       });
     } finally {
       setIsLoading(false);
-      // Cooldown delay of 1.2s before accepting next camera frame to prevent accidental double-reads
       setTimeout(() => {
         isProcessingRef.current = false;
       }, 1200);
     }
   };
 
-  // Start QR Camera Scanner (Continuous Stream Mode)
+  // Start QR Camera Scanner
   const startScanner = async () => {
     try {
       if (!scannerRef.current) {
@@ -256,21 +296,18 @@ export default function CashierPortalPage() {
       await scannerRef.current.start(
         { facingMode: "environment" },
         {
-          fps: 20, // 20 frames/sec for rapid recognition
-          qrbox: { width: 260, height: 260 },
+          fps: 20,
+          qrbox: { width: 240, height: 240 },
         },
         (decodedText) => {
-          // Continuous scanning: don't close camera, instantly process!
           processVoucherCode(decodedText);
         },
-        () => {
-          // Frame read pass
-        }
+        () => {}
       );
     } catch (err) {
       console.error("Camera start error:", err);
       setIsScanning(false);
-      alert("Tidak dapat mengakses kamera. Pastikan izin kamera aktif.");
+      alert("Tidak dapat mengakses kamera. Pastikan izin kamera telah diberikan.");
     }
   };
 
@@ -285,343 +322,550 @@ export default function CashierPortalPage() {
     setIsScanning(false);
   };
 
-  // If not authenticated, show PIN Login Gate
+  const filteredHistory = redeemHistory.filter((item) => {
+    if (!historyFilter.trim()) return true;
+    const q = historyFilter.toLowerCase();
+    return (
+      item.code.toLowerCase().includes(q) ||
+      item.guestName.toLowerCase().includes(q) ||
+      item.prizeName.toLowerCase().includes(q)
+    );
+  });
+
+  // =========================================================================
+  // PIN GATE VIEW (Clean POS Keypad)
+  // =========================================================================
   if (!isAuthenticated) {
     return (
-      <main className="min-h-dvh flex items-center justify-center p-4 bg-[#F6F1E6] text-[#382F2D] selection:bg-[#F1D09F]">
-        <div className="w-full max-w-[390px] bg-[#FAF8F2] border-[3px] border-[#382F2D] rounded-[28px] p-7 shadow-[6px_6px_0px_#382F2D] text-center">
-          <div className="relative w-[48px] h-[64px] mx-auto mb-3">
-            <Image
-              src="/gongcha-logo.png"
-              alt="Gong cha Official Logo"
-              fill
-              className="object-contain"
-            />
+      <main className="min-h-dvh flex items-center justify-center p-4 bg-[#F4F2EE] text-[#1C1917] font-sans antialiased">
+        <div className="w-full max-w-[360px] bg-white border border-stone-200/90 rounded-2xl p-6 sm:p-7 shadow-sm">
+          {/* Header */}
+          <div className="flex items-center gap-3 pb-5 mb-6 border-b border-stone-100">
+            <div className="relative w-8 h-10 shrink-0">
+              <Image
+                src="/gongcha-logo.png"
+                alt="Gong cha"
+                fill
+                className="object-contain"
+              />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-semibold tracking-tight text-[#C10230]">
+                  Gong cha POS
+                </span>
+                <span className="text-stone-300">•</span>
+                <span className="text-xs font-medium text-stone-500">
+                  Central Park UG
+                </span>
+              </div>
+              <h1 className="text-base font-semibold text-stone-900 tracking-tight">
+                Terminal Validasi Voucher
+              </h1>
+            </div>
           </div>
 
-          <span className="inline-block px-3 py-0.5 mb-2 bg-[#F5DADF] border border-[#C10230]/30 rounded-full text-[10px] font-extrabold uppercase tracking-widest text-[#C10230]">
-            OUTLET KASIR • CENTRAL PARK
-          </span>
+          {/* PIN Dots Display */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs font-medium text-stone-500">
+                Masukkan 4-Digit PIN Kasir
+              </label>
+              {pinError && (
+                <span className="text-xs font-medium text-[#C10230]">
+                  {pinError}
+                </span>
+              )}
+            </div>
+            <div
+              className={`h-13 rounded-xl border flex items-center justify-center gap-4 px-4 transition-colors ${
+                pinError
+                  ? "border-red-300 bg-red-50/40"
+                  : "border-stone-200 bg-stone-50/70"
+              }`}
+            >
+              {[0, 1, 2, 3].map((idx) => {
+                const filled = pin.length > idx;
+                return (
+                  <div
+                    key={idx}
+                    className={`w-3 h-3 rounded-full transition-all duration-150 ${
+                      filled
+                        ? "bg-[#C10230] scale-110"
+                        : "bg-stone-300 scale-100"
+                    }`}
+                  />
+                );
+              })}
+            </div>
+          </div>
 
-          <h1 className="font-display text-[28px] uppercase text-[#382F2D] leading-tight">
-            KASIR AUTO-SCANNER
-          </h1>
-          <p className="text-xs text-[#382F2D]/70 mt-1 mb-5">
-            Masukkan PIN Kasir untuk mengaktifkan scanner tiket grand opening.
-          </p>
-
-          <form onSubmit={handlePinSubmit} className="space-y-4">
-            <input
-              type="password"
-              inputMode="numeric"
-              maxLength={6}
-              value={pin}
-              onChange={(e) => {
-                setPin(e.target.value);
+          {/* Tactile Keypad */}
+          <div className="grid grid-cols-3 gap-2.5">
+            {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((digit) => (
+              <button
+                key={digit}
+                type="button"
+                onClick={() => handlePinKeyPress(digit)}
+                className="h-13 rounded-xl bg-stone-50 hover:bg-stone-100 active:bg-stone-200/80 border border-stone-200/70 text-lg font-semibold text-stone-800 transition-colors cursor-pointer select-none"
+              >
+                {digit}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => {
+                setPin("");
                 setPinError("");
               }}
-              placeholder="PIN Kasir (2026)"
-              className="w-full py-3.5 px-4 text-center text-[22px] tracking-[0.3em] font-mono font-bold bg-white border-[2px] border-[#382F2D] rounded-2xl shadow-[3px_3px_0px_#382F2D] focus:outline-none focus:border-[#C10230]"
-            />
-
-            {pinError && (
-              <p className="text-xs font-semibold text-[#C10230]">{pinError}</p>
-            )}
-
-            <button
-              type="submit"
-              className="w-full py-3.5 bg-[#C10230] hover:bg-[#821518] text-[#FAF8F2] font-display text-[18px] tracking-wide uppercase rounded-2xl border-[2.5px] border-[#382F2D] shadow-[4px_4px_0px_#382F2D] cursor-pointer transition-all active:translate-x-[2px] active:translate-y-[2px]"
+              className="h-13 rounded-xl bg-stone-50 hover:bg-stone-100 active:bg-stone-200/80 border border-stone-200/70 text-xs font-medium text-stone-500 transition-colors cursor-pointer select-none"
             >
-              MASUK KE TERMINAL KASIR
+              Reset
             </button>
+            <button
+              type="button"
+              onClick={() => handlePinKeyPress("0")}
+              className="h-13 rounded-xl bg-stone-50 hover:bg-stone-100 active:bg-stone-200/80 border border-stone-200/70 text-lg font-semibold text-stone-800 transition-colors cursor-pointer select-none"
+            >
+              0
+            </button>
+            <button
+              type="button"
+              onClick={handlePinBackspace}
+              className="h-13 rounded-xl bg-stone-50 hover:bg-stone-100 active:bg-stone-200/80 border border-stone-200/70 flex items-center justify-center text-stone-600 transition-colors cursor-pointer select-none"
+              aria-label="Hapus"
+            >
+              <Delete className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Hidden keyboard input support for desktop */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              verifyPin(pin);
+            }}
+            className="sr-only"
+          >
+            <input
+              type="password"
+              value={pin}
+              onChange={(e) => {
+                const v = e.target.value.replace(/\D/g, "").slice(0, 4);
+                setPin(v);
+                if (v.length === 4) verifyPin(v);
+              }}
+              autoFocus
+            />
           </form>
         </div>
       </main>
     );
   }
 
+  // =========================================================================
+  // AUTHENTICATED POS WORKSPACE
+  // =========================================================================
   return (
-    <main className="min-h-dvh flex flex-col items-center justify-start p-3 sm:p-6 bg-[#F6F1E6] text-[#382F2D] selection:bg-[#F1D09F]">
-      <div className="w-full max-w-[620px] flex flex-col items-center">
-        {/* Top Header Bar */}
-        <header className="w-full flex items-center justify-between py-2 mb-3 border-b-[2px] border-[#382F2D]/20">
-          <div className="flex items-center gap-2.5">
-            <div className="relative w-[32px] h-[42px]">
-              <Image
-                src="/gongcha-logo.png"
-                alt="Gong cha Logo"
-                fill
-                className="object-contain"
-              />
-            </div>
-            <div className="text-left">
-              <h1 className="font-display text-[19px] uppercase leading-none text-[#382F2D]">
-                KASIR • CENTRAL PARK
-              </h1>
-              <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#C10230] mt-0.5 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                AUTO-REDEEM ACTIVE
-              </p>
-            </div>
+    <div className="min-h-dvh bg-[#F4F2EE] text-[#1C1917] font-sans antialiased flex flex-col">
+      {/* Top POS Bar */}
+      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-xs border-b border-stone-200/90 px-4 sm:px-6 h-14 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="relative w-6 h-8 shrink-0">
+            <Image
+              src="/gongcha-logo.png"
+              alt="Gong cha"
+              fill
+              className="object-contain"
+            />
           </div>
-
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setSoundEnabled(!soundEnabled)}
-              className="p-2 rounded-xl bg-white border-[1.8px] border-[#382F2D] text-[#382F2D] cursor-pointer shadow-[1.5px_1.5px_0px_#382F2D]"
-              title={soundEnabled ? "Suara Aktif" : "Suara Senyap"}
-            >
-              {soundEnabled ? (
-                <Volume2 className="w-4 h-4 text-emerald-600" />
-              ) : (
-                <VolumeX className="w-4 h-4 text-[#382F2D]/50" />
-              )}
-            </button>
-
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="px-3 py-1.5 rounded-full bg-white border-[1.8px] border-[#382F2D] text-[11px] font-bold text-[#382F2D] hover:bg-[#382F2D] hover:text-white cursor-pointer shadow-[1.5px_1.5px_0px_#382F2D]"
-            >
-              Keluar
-            </button>
+            <span className="font-semibold text-sm text-stone-900 tracking-tight">
+              Kasir Central Park
+            </span>
+            <span className="hidden sm:inline-block text-stone-300">/</span>
+            <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium text-stone-500">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              Grand Opening Voucher POS
+            </span>
           </div>
-        </header>
-
-        {/* Scanner Terminal Card */}
-        <div className="w-full bg-[#FAF8F2] border-[2.5px] border-[#382F2D] rounded-[24px] p-4 sm:p-5 shadow-[4px_4px_0px_#382F2D] mb-4 text-center">
-          {/* Mode Switch & Controls */}
-          <div className="flex items-center justify-between gap-2 mb-3 bg-white p-2.5 rounded-2xl border-[1.8px] border-[#382F2D]/20">
-            <div className="flex items-center gap-2 text-left">
-              <div
-                className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
-                  autoRedeem
-                    ? "bg-emerald-50 border-emerald-500 text-emerald-700"
-                    : "bg-gray-100 border-gray-400 text-gray-600"
-                }`}
-              >
-                <Zap className="w-4 h-4 stroke-[2.4]" />
-              </div>
-              <div>
-                <p className="text-[12px] font-extrabold uppercase leading-none text-[#382F2D]">
-                  Mode Auto-Redeem
-                </p>
-                <p className="text-[10px] text-[#382F2D]/60 mt-0.5">
-                  {autoRedeem
-                    ? "Otomatis redeem & tandai terpakai saat scan"
-                    : "Cek data dulu sebelum redeem"}
-                </p>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setAutoRedeem(!autoRedeem)}
-              className={`px-3 py-1.5 rounded-full font-display text-[12px] uppercase border-[1.8px] border-[#382F2D] cursor-pointer transition-colors shadow-[1.5px_1.5px_0px_#382F2D] ${
-                autoRedeem
-                  ? "bg-emerald-500 text-white"
-                  : "bg-gray-200 text-[#382F2D]"
-              }`}
-            >
-              {autoRedeem ? "ON" : "OFF"}
-            </button>
-          </div>
-
-          {/* Camera Viewport */}
-          <div className="relative mb-3">
-            <div
-              id="reader"
-              className={`w-full overflow-hidden rounded-2xl border-[2.5px] border-[#382F2D] bg-black ${
-                isScanning ? "block aspect-square max-h-[300px]" : "hidden"
-              }`}
-            />
-
-            {!isScanning ? (
-              <button
-                type="button"
-                onClick={startScanner}
-                className="w-full py-4 bg-[#C10230] hover:bg-[#821518] text-[#FAF8F2] font-display text-[18px] sm:text-[20px] tracking-wide uppercase rounded-2xl border-[2.5px] border-[#382F2D] shadow-[4px_4px_0px_#382F2D] transition-all cursor-pointer flex items-center justify-center gap-2.5 active:translate-x-[2px] active:translate-y-[2px]"
-              >
-                <Camera className="w-5 h-5 stroke-[2.2]" />
-                <span>AKTIFKAN KAMERA SCANNER</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={stopScanner}
-                className="w-full py-3 bg-[#382F2D] hover:bg-black text-[#FAF8F2] font-display text-[15px] tracking-wide uppercase rounded-xl border-[2px] border-[#382F2D] cursor-pointer mt-2"
-              >
-                TUTUP KAMERA SCANNER
-              </button>
-            )}
-          </div>
-
-          {/* Manual Input for Scanner Barcode Gun / Keyboard */}
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              processVoucherCode(manualCode);
-            }}
-            className="flex gap-2 mt-2"
-          >
-            <input
-              type="text"
-              value={manualCode}
-              onChange={(e) => setManualCode(e.target.value.toUpperCase())}
-              placeholder="Scan Barcode Gun / Ketik Kode..."
-              className="flex-1 py-2.5 px-3.5 bg-white border-[2px] border-[#382F2D] rounded-xl font-mono text-[15px] font-bold uppercase tracking-wider focus:outline-none focus:border-[#C10230]"
-            />
-            <button
-              type="submit"
-              disabled={isLoading || !manualCode.trim()}
-              className="px-4 py-2.5 bg-[#C10230] hover:bg-[#821518] disabled:opacity-60 text-white border-[2px] border-[#382F2D] rounded-xl font-display text-[15px] uppercase tracking-wide cursor-pointer transition-colors"
-            >
-              Proses
-            </button>
-          </form>
         </div>
 
-        {/* Real-time Scan Result Banner */}
-        {lastScanResult && (
-          <div
-            className={`w-full rounded-[24px] border-[2.5px] border-[#382F2D] p-4 sm:p-5 shadow-[4px_4px_0px_#382F2D] mb-4 text-left animate-modal-pop ${
-              lastScanResult.type === "SUCCESS"
-                ? "bg-emerald-50 border-emerald-800"
-                : lastScanResult.type === "ALREADY_USED"
-                ? "bg-amber-50 border-amber-800"
-                : "bg-rose-50 border-rose-800"
-            }`}
+        <div className="flex items-center gap-2">
+          {/* Today/Total Counter Pill */}
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-stone-100 text-xs font-medium text-stone-700">
+            <TicketCheck className="w-3.5 h-3.5 text-[#C10230]" />
+            <span>{totalRedeemedCount}</span>
+            <span className="hidden xs:inline text-stone-500">terpakai</span>
+          </div>
+
+          {/* Audio Toggle */}
+          <button
+            type="button"
+            onClick={() => setSoundEnabled(!soundEnabled)}
+            className="h-8 w-8 rounded-lg border border-stone-200 bg-white hover:bg-stone-50 flex items-center justify-center text-stone-600 transition-colors cursor-pointer"
+            title={soundEnabled ? "Suara Beep Aktif" : "Suara Dimatikan"}
           >
-            <div className="flex items-start gap-3">
-              {lastScanResult.type === "SUCCESS" ? (
-                <div className="w-9 h-9 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0 border-[2px] border-[#382F2D]">
-                  <Check className="w-5 h-5 stroke-[3]" />
-                </div>
-              ) : lastScanResult.type === "ALREADY_USED" ? (
-                <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 border-[2px] border-[#382F2D]">
-                  <AlertTriangle className="w-5 h-5 stroke-[2.5]" />
-                </div>
-              ) : (
-                <div className="w-9 h-9 rounded-xl bg-rose-500 text-white flex items-center justify-center shrink-0 border-[2px] border-[#382F2D]">
-                  <XCircle className="w-5 h-5 stroke-[2.5]" />
-                </div>
-              )}
+            {soundEnabled ? (
+              <Volume2 className="w-4 h-4 text-stone-700" />
+            ) : (
+              <VolumeX className="w-4 h-4 text-stone-400" />
+            )}
+          </button>
 
-              <div className="flex-1 min-w-0">
-                <span
-                  className={`inline-block px-2.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider mb-1 ${
-                    lastScanResult.type === "SUCCESS"
-                      ? "bg-emerald-200 text-emerald-900"
-                      : lastScanResult.type === "ALREADY_USED"
-                      ? "bg-amber-200 text-amber-900"
-                      : "bg-rose-200 text-rose-900"
-                  }`}
-                >
-                  {lastScanResult.type === "SUCCESS"
-                    ? "BERHASIL DITUKARKAN"
-                    : lastScanResult.type === "ALREADY_USED"
-                    ? "DITOLAK: SUDAH PERNAH DIGUNAKAN"
-                    : "KODE TIDAK VALID"}
-                </span>
+          {/* Logout */}
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="h-8 px-2.5 rounded-lg border border-stone-200 bg-white hover:bg-stone-50 flex items-center gap-1.5 text-xs font-medium text-stone-600 hover:text-stone-900 transition-colors cursor-pointer"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Keluar</span>
+          </button>
+        </div>
+      </header>
 
-                <h3 className="font-display text-[20px] sm:text-[22px] uppercase leading-tight text-[#382F2D]">
-                  {lastScanResult.prizeName || lastScanResult.title}
-                </h3>
-
-                <p className="text-xs font-semibold text-[#382F2D]/80 mt-1">
-                  {lastScanResult.message}
-                </p>
-
-                {lastScanResult.code && (
-                  <div className="mt-2.5 pt-2.5 border-t border-[#382F2D]/15 flex items-center justify-between text-xs">
-                    <span className="font-mono font-bold text-[#382F2D]">
-                      KODE: {lastScanResult.code}
-                    </span>
-                    {lastScanResult.guestName && (
-                      <span className="font-bold text-[#C10230]">
-                        Guest: {lastScanResult.guestName}
-                      </span>
+      {/* Main Content Grid */}
+      <main className="flex-1 w-full max-w-5xl mx-auto p-3.5 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-start">
+        {/* LEFT COLUMN: Scanner & Action Deck */}
+        <div className="lg:col-span-6 space-y-4">
+          {/* Action Result Card (Placed right at the top when triggered so cashier never misses it) */}
+          {lastScanResult && (
+            <div
+              className={`rounded-xl border p-4 bg-white shadow-xs transition-all ${
+                lastScanResult.type === "SUCCESS"
+                  ? "border-emerald-200 border-l-4 border-l-emerald-600"
+                  : lastScanResult.type === "CHECKED_VALID"
+                  ? "border-blue-200 border-l-4 border-l-blue-600"
+                  : lastScanResult.type === "ALREADY_USED"
+                  ? "border-amber-200 border-l-4 border-l-amber-500"
+                  : "border-red-200 border-l-4 border-l-red-600"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3 min-w-0">
+                  <div
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
+                      lastScanResult.type === "SUCCESS"
+                        ? "bg-emerald-50 text-emerald-600"
+                        : lastScanResult.type === "CHECKED_VALID"
+                        ? "bg-blue-50 text-blue-600"
+                        : lastScanResult.type === "ALREADY_USED"
+                        ? "bg-amber-50 text-amber-600"
+                        : "bg-red-50 text-red-600"
+                    }`}
+                  >
+                    {lastScanResult.type === "SUCCESS" ||
+                    lastScanResult.type === "CHECKED_VALID" ? (
+                      <Check className="w-4 h-4 stroke-[2.5]" />
+                    ) : lastScanResult.type === "ALREADY_USED" ? (
+                      <AlertCircle className="w-4 h-4 stroke-[2.2]" />
+                    ) : (
+                      <X className="w-4 h-4 stroke-[2.5]" />
                     )}
                   </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
 
-        {/* Live Redeem History (Always Standby at Bottom) */}
-        <div className="w-full bg-[#FAF8F2] border-[2.5px] border-[#382F2D] rounded-[24px] p-4 sm:p-5 shadow-[4px_4px_0px_#382F2D] text-left">
-          <div className="flex items-center justify-between pb-3 mb-3 border-b-[2px] border-[#382F2D]/15">
-            <div className="flex items-center gap-2">
-              <History className="w-4 h-4 text-[#C10230] stroke-[2.4]" />
-              <h2 className="font-display text-[18px] uppercase text-[#382F2D] leading-none">
-                Riwayat Redeem Real-Time
-              </h2>
-            </div>
-            <button
-              type="button"
-              onClick={loadHistory}
-              disabled={isLoadingHistory}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white border border-[#382F2D]/30 text-[10px] font-bold text-[#382F2D] hover:bg-[#382F2D] hover:text-white cursor-pointer transition-colors"
-            >
-              <RotateCcw className={`w-3 h-3 ${isLoadingHistory ? "animate-spin" : ""}`} />
-              <span>Refresh</span>
-            </button>
-          </div>
-
-          {/* History List */}
-          <div className="space-y-2.5 max-h-[360px] overflow-y-auto pr-1">
-            {redeemHistory.length === 0 ? (
-              <div className="py-8 text-center text-xs font-semibold text-[#382F2D]/50 uppercase tracking-wider">
-                Belum ada voucher yang di-redeem hari ini.
-              </div>
-            ) : (
-              redeemHistory.map((item, idx) => (
-                <div
-                  key={`${item.id}-${idx}`}
-                  className="bg-white rounded-xl border-[1.5px] border-[#382F2D]/20 p-3 flex items-center justify-between gap-3 shadow-[1px_1px_0px_#382F2D]/20 hover:border-[#382F2D] transition-colors"
-                >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-[13px] font-extrabold text-[#382F2D]">
-                        {item.code}
-                      </span>
-                      <span className="inline-block px-2 py-0.2 rounded-full bg-emerald-50 border border-emerald-300 text-emerald-800 text-[9px] font-extrabold uppercase">
-                        REDEEMED
+                      <span
+                        className={`text-[11px] font-semibold uppercase tracking-wider ${
+                          lastScanResult.type === "SUCCESS"
+                            ? "text-emerald-700"
+                            : lastScanResult.type === "CHECKED_VALID"
+                            ? "text-blue-700"
+                            : lastScanResult.type === "ALREADY_USED"
+                            ? "text-amber-700"
+                            : "text-red-700"
+                        }`}
+                      >
+                        {lastScanResult.title}
                       </span>
                     </div>
 
-                    <p className="font-display text-[15px] uppercase text-[#C10230] leading-snug truncate mt-0.5">
-                      {item.prizeName}
+                    {lastScanResult.prizeName && (
+                      <h3 className="text-base font-bold text-stone-900 mt-0.5 leading-snug">
+                        {lastScanResult.prizeName}
+                      </h3>
+                    )}
+
+                    <p className="text-xs text-stone-600 mt-0.5 leading-relaxed">
+                      {lastScanResult.message}
                     </p>
 
-                    <p className="text-[11px] font-semibold text-[#382F2D]/70 truncate">
-                      {item.guestName} {item.whatsapp ? `• ${item.whatsapp}` : ""}
-                    </p>
-                  </div>
+                    {lastScanResult.code && (
+                      <div className="mt-3 pt-2.5 border-t border-stone-100 flex flex-wrap items-center justify-between gap-2 text-xs">
+                        <span className="font-mono font-semibold text-stone-800 bg-stone-100 px-2 py-0.5 rounded">
+                          {lastScanResult.code}
+                        </span>
+                        {lastScanResult.guestName && (
+                          <span className="text-stone-500 font-medium">
+                            {lastScanResult.guestName}
+                            {lastScanResult.whatsapp
+                              ? ` · ${lastScanResult.whatsapp}`
+                              : ""}
+                          </span>
+                        )}
+                      </div>
+                    )}
 
-                  <div className="text-right shrink-0">
-                    <span className="font-mono text-[12px] font-bold text-[#382F2D]">
-                      {new Date(item.redeemedAt).toLocaleTimeString("id-ID", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}{" "}
-                      WIB
-                    </span>
-                    <p className="text-[9px] text-[#382F2D]/50 font-medium">
-                      {new Date(item.redeemedAt).toLocaleDateString("id-ID", {
-                        day: "numeric",
-                        month: "short",
-                      })}
-                    </p>
+                    {/* Confirm Redeem Button when in "Check First" Mode */}
+                    {lastScanResult.type === "CHECKED_VALID" &&
+                      lastScanResult.code && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            processVoucherCode(lastScanResult.code!, true)
+                          }
+                          disabled={isLoading}
+                          className="mt-3 w-full py-2.5 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold tracking-wide transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          <Check className="w-4 h-4" />
+                          <span>Konfirmasi & Gunakan Voucher Sekarang</span>
+                        </button>
+                      )}
                   </div>
                 </div>
-              ))
-            )}
+
+                <button
+                  type="button"
+                  onClick={() => setLastScanResult(null)}
+                  className="text-stone-400 hover:text-stone-600 p-1 rounded-md cursor-pointer"
+                  aria-label="Tutup notifikasi"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Scanner & Input Card */}
+          <div className="bg-white border border-stone-200/90 rounded-2xl p-4 sm:p-5 shadow-xs">
+            {/* Segmented Mode Selector */}
+            <div className="flex items-center justify-between gap-2 pb-4 mb-4 border-b border-stone-100">
+              <div>
+                <h2 className="text-sm font-semibold text-stone-900">
+                  Mode Pemindaian
+                </h2>
+                <p className="text-xs text-stone-500">
+                  {autoRedeem
+                    ? "Otomatis potong voucher begitu QR terbaca"
+                    : "Periksa status voucher dulu sebelum dipotong"}
+                </p>
+              </div>
+
+              <div className="inline-flex rounded-lg bg-stone-100 p-0.5 border border-stone-200/60 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setAutoRedeem(true)}
+                  className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all cursor-pointer ${
+                    autoRedeem
+                      ? "bg-white text-stone-900 shadow-2xs"
+                      : "text-stone-500 hover:text-stone-800"
+                  }`}
+                >
+                  Auto-Redeem
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAutoRedeem(false)}
+                  className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all cursor-pointer ${
+                    !autoRedeem
+                      ? "bg-white text-stone-900 shadow-2xs"
+                      : "text-stone-500 hover:text-stone-800"
+                  }`}
+                >
+                  Cek Dulu
+                </button>
+              </div>
+            </div>
+
+            {/* Camera Viewport */}
+            <div className="mb-4">
+              <div
+                id="reader"
+                className={`w-full overflow-hidden rounded-xl border border-stone-200 bg-stone-950 ${
+                  isScanning ? "block aspect-square max-h-[290px]" : "hidden"
+                }`}
+              />
+
+              {!isScanning ? (
+                <button
+                  type="button"
+                  onClick={startScanner}
+                  className="w-full py-3.5 px-4 bg-[#C10230] hover:bg-[#a30228] active:bg-[#8b0222] text-white font-semibold text-sm rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-2xs"
+                >
+                  <Camera className="w-4 h-4" />
+                  <span>Buka Kamera Scanner QR</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={stopScanner}
+                  className="w-full py-2.5 px-4 mt-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-medium text-xs rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <CameraOff className="w-3.5 h-3.5" />
+                  <span>Matikan Kamera</span>
+                </button>
+              )}
+            </div>
+
+            {/* Divider */}
+            <div className="relative flex py-1 items-center mb-4">
+              <div className="grow border-t border-stone-100"></div>
+              <span className="shrink mx-3 text-[11px] font-medium text-stone-400 uppercase tracking-wider">
+                Atau Input Kode Manual / Barcode Gun
+              </span>
+              <div className="grow border-t border-stone-100"></div>
+            </div>
+
+            {/* Manual Input Form */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                processVoucherCode(manualCode);
+              }}
+              className="flex gap-2"
+            >
+              <div className="relative flex-1">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={manualCode}
+                  onChange={(e) => handleManualInputChange(e.target.value)}
+                  placeholder="Contoh: GC-XXXX-XXXX"
+                  className="w-full h-11 pl-3.5 pr-8 bg-stone-50 focus:bg-white border border-stone-200 focus:border-stone-400 rounded-xl font-mono text-sm font-semibold uppercase tracking-wider text-stone-900 placeholder:font-sans placeholder:font-normal placeholder:tracking-normal placeholder:text-stone-400 focus:outline-none transition-colors"
+                />
+                {manualCode && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setManualCode("");
+                      inputRef.current?.focus();
+                    }}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 p-0.5 cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading || !manualCode.trim()}
+                className="h-11 px-4 bg-stone-900 hover:bg-stone-800 disabled:bg-stone-200 disabled:text-stone-400 text-white rounded-xl text-xs font-semibold tracking-wide transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer"
+              >
+                <span>{autoRedeem ? "Redeem" : "Cek"}</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </form>
           </div>
         </div>
-      </div>
-    </main>
+
+        {/* RIGHT COLUMN: Standby Real-Time History Log */}
+        <div className="lg:col-span-6">
+          <div className="bg-white border border-stone-200/90 rounded-2xl shadow-xs overflow-hidden flex flex-col">
+            {/* History Header */}
+            <div className="p-4 sm:px-5 border-b border-stone-100 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-stone-400" />
+                <h2 className="text-sm font-semibold text-stone-900">
+                  Riwayat Penukaran
+                </h2>
+                <span className="text-xs font-medium text-stone-400">
+                  ({redeemHistory.length} terbaru)
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={loadHistory}
+                disabled={isLoadingHistory}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-stone-200 hover:bg-stone-50 text-xs font-medium text-stone-600 transition-colors cursor-pointer"
+              >
+                <RotateCcw
+                  className={`w-3 h-3 ${isLoadingHistory ? "animate-spin" : ""}`}
+                />
+                <span>Segarkan</span>
+              </button>
+            </div>
+
+            {/* Quick Search in History */}
+            {redeemHistory.length > 3 && (
+              <div className="px-4 sm:px-5 py-2.5 bg-stone-50/60 border-b border-stone-100">
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={historyFilter}
+                    onChange={(e) => setHistoryFilter(e.target.value)}
+                    placeholder="Cari kode atau nama tamu di riwayat..."
+                    className="w-full h-8 pl-8 pr-7 bg-white border border-stone-200/80 rounded-lg text-xs text-stone-800 placeholder:text-stone-400 focus:outline-none focus:border-stone-400"
+                  />
+                  {historyFilter && (
+                    <button
+                      type="button"
+                      onClick={() => setHistoryFilter("")}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Ledger Rows */}
+            <div className="divide-y divide-stone-100 max-h-[460px] overflow-y-auto">
+              {filteredHistory.length === 0 ? (
+                <div className="py-12 px-4 text-center">
+                  <p className="text-xs font-medium text-stone-400">
+                    {historyFilter
+                      ? "Tidak ada riwayat yang cocok dengan pencarian."
+                      : "Belum ada voucher yang ditukarkan."}
+                  </p>
+                </div>
+              ) : (
+                filteredHistory.map((item, idx) => (
+                  <div
+                    key={`${item.id}-${idx}`}
+                    className="px-4 sm:px-5 py-3 hover:bg-stone-50/70 transition-colors flex items-center justify-between gap-3"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs font-semibold text-stone-900 bg-stone-100 px-1.5 py-0.5 rounded">
+                          {item.code}
+                        </span>
+                        <span className="text-xs font-semibold text-[#C10230] truncate">
+                          {item.prizeName}
+                        </span>
+                      </div>
+                      <p className="text-xs text-stone-500 truncate mt-1">
+                        {item.guestName}
+                        {item.whatsapp ? ` · ${item.whatsapp}` : ""}
+                      </p>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <p className="font-mono text-xs font-medium text-stone-700 tabular-nums">
+                        {new Date(item.redeemedAt).toLocaleTimeString("id-ID", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                      <p className="text-[11px] text-stone-400">
+                        {new Date(item.redeemedAt).toLocaleDateString("id-ID", {
+                          day: "numeric",
+                          month: "short",
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
   );
 }

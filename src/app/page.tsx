@@ -647,7 +647,7 @@ export default function HomePage() {
                       DATE
                     </p>
                     <p className="font-display text-[15px] xl:text-[18px] leading-none tracking-[0.02em] text-[#382F2D] uppercase">
-                      6 NOV 2026
+                      7 NOV 2026
                     </p>
                   </div>
                 </div>
@@ -770,7 +770,7 @@ export default function HomePage() {
                           DATE
                         </p>
                         <p className="font-display text-[16px] sm:text-[18px] leading-none tracking-[0.02em] text-[#382F2D] uppercase">
-                          6 NOV 2026
+                          7 NOV 2026
                         </p>
                       </div>
                     </div>
@@ -914,7 +914,7 @@ export default function HomePage() {
                   1. Syarat & Ketentuan Grand Opening
                 </h4>
                 <ul className="list-disc pl-4 space-y-1 text-[#382F2D]/75 text-[11.5px]">
-                  <li>Voucher hanya berlaku di outlet <strong>Gong cha Central Park Mall (UG Floor)</strong> mulai tanggal 6 November 2026.</li>
+                  <li>Voucher hanya berlaku di outlet <strong>Gong cha Central Park Mall (UG Floor)</strong> mulai tanggal 7 November 2026.</li>
                   <li>Setiap pengunjung berhak mengikuti Spin the Wheel sebanyak <strong>1 (satu) kali</strong> dengan nomor WhatsApp & Email yang valid.</li>
                   <li>Kode voucher wajib ditunjukkan kepada kasir saat pemesanan sebelum pembayaran diproses.</li>
                   <li>Voucher tidak dapat diuangkan, dipindahtangankan secara komersial, atau digabungkan dengan promo eksternal lainnya.</li>

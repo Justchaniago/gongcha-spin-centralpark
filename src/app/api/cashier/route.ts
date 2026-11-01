@@ -13,6 +13,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized PIN" }, { status: 401 });
     }
 
+    const { count: totalRedeemed } = await supabaseAdmin
+      .from("voucher_codes")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "REDEEMED");
+
     const { data: history, error } = await supabaseAdmin
       .from("voucher_codes")
       .select(`
@@ -30,7 +35,7 @@ export async function GET(req: NextRequest) {
       `)
       .eq("status", "REDEEMED")
       .order("redeemed_at", { ascending: false })
-      .limit(20);
+      .limit(50);
 
     if (error) {
       console.error("History fetch error:", error);
@@ -47,7 +52,10 @@ export async function GET(req: NextRequest) {
       redeemedAt: h.redeemed_at,
     }));
 
-    return NextResponse.json({ history: formatted });
+    return NextResponse.json({
+      history: formatted,
+      totalRedeemed: totalRedeemed ?? formatted.length,
+    });
   } catch (err) {
     console.error("Cashier GET history error:", err);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });

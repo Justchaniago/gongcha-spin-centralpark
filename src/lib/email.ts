@@ -90,7 +90,7 @@ export async function sendVoucherEmail({
                 <tr>
                   <td style="font-size: 13px; line-height: 1.6; color: #574B48;">
                     📍 <strong>Lokasi:</strong> Gong cha Central Park Mall (UG Floor)<br>
-                    🗓️ <strong>Mulai Berlaku:</strong> 6 November 2026<br>
+                    🗓️ <strong>Mulai Berlaku:</strong> 7 November 2026<br>
                     ⏰ <strong>Waktu:</strong> Sesuai jam operasional mall
                   </td>
                 </tr>

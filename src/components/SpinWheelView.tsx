@@ -34,7 +34,7 @@ const DEFAULT_PRIZE_SEGMENTS: PrizeSegment[] = [
     color: "#C10230",
     textColor: "#FAF8F2",
     codePrefix: "GC",
-    tnc: "Buy 1 Get 1 free untuk varian menu pilihan. Berlaku mulai 6 November 2026 hanya di Gong cha Central Park Mall (UG Floor).",
+    tnc: "Buy 1 Get 1 free untuk varian menu pilihan. Berlaku mulai 7 November 2026 hanya di Gong cha Central Park Mall (UG Floor).",
   },
   {
     id: "DISC_50",
@@ -43,7 +43,7 @@ const DEFAULT_PRIZE_SEGMENTS: PrizeSegment[] = [
     color: "#FAF8F2",
     textColor: "#382F2D",
     codePrefix: "GC",
-    tnc: "Diskon 50% dengan maksimal potongan Rp 25.000. Berlaku mulai 6 November 2026 hanya di Gong cha Central Park Mall (UG Floor).",
+    tnc: "Diskon 50% dengan maksimal potongan Rp 25.000. Berlaku mulai 7 November 2026 hanya di Gong cha Central Park Mall (UG Floor).",
   },
   {
     id: "VOUCHER_50K",
@@ -52,7 +52,7 @@ const DEFAULT_PRIZE_SEGMENTS: PrizeSegment[] = [
     color: "#C10230",
     textColor: "#FAF8F2",
     codePrefix: "GC",
-    tnc: "Potongan Rp 50.000 dengan minimal belanja Rp 100.000. Berlaku mulai 6 November 2026 hanya di Gong cha Central Park Mall (UG Floor).",
+    tnc: "Potongan Rp 50.000 dengan minimal belanja Rp 100.000. Berlaku mulai 7 November 2026 hanya di Gong cha Central Park Mall (UG Floor).",
   },
   {
     id: "VOUCHER_100K",
@@ -61,7 +61,7 @@ const DEFAULT_PRIZE_SEGMENTS: PrizeSegment[] = [
     color: "#FAF8F2",
     textColor: "#382F2D",
     codePrefix: "GC",
-    tnc: "Grand Prize Potongan Rp 100.000 dengan minimal belanja Rp 200.000. Berlaku mulai 6 November 2026 hanya di Gong cha Central Park Mall (UG Floor).",
+    tnc: "Grand Prize Potongan Rp 100.000 dengan minimal belanja Rp 200.000. Berlaku mulai 7 November 2026 hanya di Gong cha Central Park Mall (UG Floor).",
   },
 ];
 
