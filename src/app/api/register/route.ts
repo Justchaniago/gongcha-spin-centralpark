@@ -33,21 +33,23 @@ export async function POST(req: NextRequest) {
     // 1. Check if user already exists with this phone or email
     const { data: existingUser } = await supabaseAdmin
       .from("guest_users")
-      .select("id, full_name, spin_transactions(id, voucher_codes(unique_code, prizes(name, terms_conditions)))")
+      .select("id, full_name, user_agent, spin_transactions(id, voucher_codes(unique_code, prizes(name, terms_conditions)))")
       .or(`whatsapp.eq.${cleanedPhone},email.eq.${email.trim().toLowerCase()}`)
       .maybeSingle();
 
     if (existingUser) {
-      // If already spun, immediately REJECT with 409 Conflict
+      // If already spun or revoked, immediately REJECT with 409 Conflict
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const tx = (existingUser as any).spin_transactions;
-      const hasSpun = Array.isArray(tx) ? tx.length > 0 : !!tx;
+      const isRevoked = String((existingUser as any).user_agent || "").includes("[REVOKED");
+      const hasSpun = isRevoked || (Array.isArray(tx) ? tx.length > 0 : !!tx);
 
       if (hasSpun) {
         return NextResponse.json(
           {
-            error:
-              "This WhatsApp number or Email has already participated. Each guest is limited to 1 voucher.",
+            error: isRevoked
+              ? "Hak partisipasi akun ini telah dibatalkan (Revoked). Anda tidak dapat melakukan spin kembali."
+              : "This WhatsApp number or Email has already participated. Each guest is limited to 1 voucher.",
           },
           { status: 409 }
         );

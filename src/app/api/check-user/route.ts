@@ -19,18 +19,22 @@ export async function POST(req: NextRequest) {
 
       const { data: existingUser } = await supabaseAdmin
         .from("guest_users")
-        .select("id, spin_transactions(id)")
+        .select("id, user_agent, spin_transactions(id)")
         .eq("whatsapp", cleanedPhone)
         .maybeSingle();
 
       if (existingUser) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const tx = (existingUser as any).spin_transactions;
-        const hasSpun = Array.isArray(tx) ? tx.length > 0 : !!tx;
+        const isRevoked = String((existingUser as any).user_agent || "").includes("[REVOKED");
+        const hasSpun = isRevoked || (Array.isArray(tx) ? tx.length > 0 : !!tx);
         return NextResponse.json({
           exists: true,
           hasSpun,
-          message: hasSpun
+          isRevoked,
+          message: isRevoked
+            ? "Nomor WhatsApp ini telah diblokir/di-revoke dan tidak dapat mengikuti spin lagi."
+            : hasSpun
             ? "This WhatsApp number has already claimed a voucher."
             : "This WhatsApp number is already registered.",
         });
@@ -47,18 +51,22 @@ export async function POST(req: NextRequest) {
 
       const { data: existingUser } = await supabaseAdmin
         .from("guest_users")
-        .select("id, spin_transactions(id)")
+        .select("id, user_agent, spin_transactions(id)")
         .eq("email", value.toLowerCase())
         .maybeSingle();
 
       if (existingUser) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const tx = (existingUser as any).spin_transactions;
-        const hasSpun = Array.isArray(tx) ? tx.length > 0 : !!tx;
+        const isRevoked = String((existingUser as any).user_agent || "").includes("[REVOKED");
+        const hasSpun = isRevoked || (Array.isArray(tx) ? tx.length > 0 : !!tx);
         return NextResponse.json({
           exists: true,
           hasSpun,
-          message: hasSpun
+          isRevoked,
+          message: isRevoked
+            ? "Alamat Email ini telah diblokir/di-revoke dan tidak dapat mengikuti spin lagi."
+            : hasSpun
             ? "This Email address has already claimed a voucher."
             : "This Email address is already registered.",
         });

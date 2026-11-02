@@ -26,16 +26,42 @@ export async function POST(req: NextRequest) {
 
     const { userId } = parsed.data;
 
+    // 0. Check if user is revoked
+    const { data: guestCheck } = await supabaseAdmin
+      .from("guest_users")
+      .select("user_agent")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (guestCheck && String(guestCheck.user_agent || "").includes("[REVOKED")) {
+      return NextResponse.json(
+        {
+          error:
+            "Hak partisipasi Anda telah dibatalkan (Revoked). Anda tidak dapat melakukan spin kembali.",
+        },
+        { status: 403 }
+      );
+    }
+
     // 1. Double check if user has already spun
     const { data: existingTx } = await supabaseAdmin
       .from("spin_transactions")
-      .select("id, voucher_codes(unique_code, prizes(id, name, terms_conditions))")
+      .select("id, voucher_codes(unique_code, status, assigned_to_user_id, prizes(id, name, terms_conditions))")
       .eq("user_id", userId)
       .maybeSingle();
 
     if (existingTx) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const vc = (existingTx as any).voucher_codes;
+      if (!vc || vc.assigned_to_user_id !== userId) {
+        return NextResponse.json(
+          {
+            error:
+              "Voucher Anda telah di-revoke oleh Admin dan Anda tidak dapat melakukan spin ulang.",
+          },
+          { status: 403 }
+        );
+      }
       return NextResponse.json(
         {
           error: "You have already participated and spun the wheel.",

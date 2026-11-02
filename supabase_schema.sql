@@ -12,7 +12,7 @@ DROP TABLE IF EXISTS prizes CASCADE;
 DROP TYPE IF EXISTS voucher_status_enum CASCADE;
 
 -- 2. ENUM status kode voucher
-CREATE TYPE voucher_status_enum AS ENUM ('AVAILABLE', 'ASSIGNED', 'REDEEMED');
+CREATE TYPE voucher_status_enum AS ENUM ('AVAILABLE', 'ASSIGNED', 'REDEEMED', 'REVOKED');
 
 -- 3. Tabel Kategori Hadiah (Master Prizes)
 CREATE TABLE prizes (
