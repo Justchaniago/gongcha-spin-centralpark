@@ -1,5 +1,5 @@
 import { Resend } from "resend";
-import QRCode from "qrcode";
+import { getOrCreateVoucherQrCodeUrl } from "./voucher-qr";
 
 const resendApiKey = process.env.RESEND_API_KEY;
 const resendFromEmail = process.env.RESEND_FROM_EMAIL || "Gong cha Indonesia <voucher@gongcha-id.app>";
@@ -12,6 +12,7 @@ interface SendVoucherEmailParams {
   voucherCode: string;
   prizeName: string;
   termsConditions?: string | null;
+  qrCodeUrl?: string;
 }
 
 export async function sendVoucherEmail({
@@ -20,6 +21,7 @@ export async function sendVoucherEmail({
   voucherCode,
   prizeName,
   termsConditions,
+  qrCodeUrl,
 }: SendVoucherEmailParams): Promise<{ success: boolean; id?: string; error?: string }> {
   if (!resend) {
     console.warn("[Resend Email] RESEND_API_KEY is not defined. Email dispatch skipped.");
@@ -32,20 +34,17 @@ export async function sendVoucherEmail({
   }
 
   try {
-    // Generate QR Code data URL for instant scanning by cashier POS
-    let qrDataUrl = "";
-    try {
-      qrDataUrl = await QRCode.toDataURL(voucherCode, {
-        width: 240,
-        margin: 1,
-        color: {
-          dark: "#18181B",
-          light: "#FFFFFF",
-        },
-      });
-    } catch (qrErr) {
-      console.error("[Resend Email] QR generation error:", qrErr);
+    // Obtain permanent hosted QR code image URL and buffer from Supabase Storage
+    let directQrUrl = qrCodeUrl;
+    let qrBuffer: Buffer | undefined;
+
+    if (!directQrUrl) {
+      const qrRes = await getOrCreateVoucherQrCodeUrl(voucherCode);
+      directQrUrl = qrRes.url;
+      qrBuffer = qrRes.buffer;
     }
+
+    const cidName = `qr-${voucherCode}`;
 
     const html = `
 <!DOCTYPE html>
@@ -91,16 +90,10 @@ export async function sendVoucherEmail({
                   ${prizeName}
                 </div>
 
-                ${
-                  qrDataUrl
-                    ? `
-                <!-- QR Code Box -->
+                <!-- QR Code Box (Uses Hosted HTTPS CDN with CID Fallback) -->
                 <div style="margin: 0 auto 16px auto; display: inline-block; background-color: #FFFFFF; padding: 12px; border-radius: 12px; border: 1px solid #E8DFD1; box-shadow: 0 4px 12px rgba(0,0,0,0.04);">
-                  <img src="${qrDataUrl}" alt="QR Code ${voucherCode}" width="160" height="160" style="display: block; width: 160px; height: 160px;" />
+                  <img src="${directQrUrl || `cid:${cidName}`}" alt="QR Code ${voucherCode}" width="160" height="160" style="display: block; width: 160px; height: 160px; border: 0;" />
                 </div>
-                `
-                    : ""
-                }
                 
                 <div>
                   <div style="display: inline-block; background-color: #FFFFFF; border: 1px solid #E8DFD1; border-radius: 10px; padding: 8px 18px; margin: 4px 0;">
@@ -163,11 +156,31 @@ export async function sendVoucherEmail({
 </html>
     `;
 
+    // Send via Resend with attachment for CID support across all webmail/mobile mail clients
+    const attachments = directQrUrl
+      ? [
+          {
+            filename: `qr-${voucherCode}.png`,
+            path: directQrUrl,
+            content_id: cidName,
+          },
+        ]
+      : qrBuffer
+      ? [
+          {
+            filename: `qr-${voucherCode}.png`,
+            content: qrBuffer,
+            content_id: cidName,
+          },
+        ]
+      : undefined;
+
     const { data, error } = await resend.emails.send({
       from: resendFromEmail,
       to,
       subject: `🎉 [Gong cha] Voucher Anda: ${prizeName} (${voucherCode})`,
       html,
+      attachments,
     });
 
     if (error) {

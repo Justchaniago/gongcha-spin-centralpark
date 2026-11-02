@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { supabaseAdmin } from "@/lib/supabase";
 import { sendVoucherEmail } from "@/lib/email";
+import { getOrCreateVoucherQrCodeUrl } from "@/lib/voucher-qr";
 
 const SpinSchema = z.object({
   userId: z.string().uuid("Invalid user session"),
@@ -62,6 +63,10 @@ export async function POST(req: NextRequest) {
           { status: 403 }
         );
       }
+      const qrRes = vc?.unique_code
+        ? await getOrCreateVoucherQrCodeUrl(vc.unique_code)
+        : null;
+
       return NextResponse.json(
         {
           error: "You have already participated and spun the wheel.",
@@ -70,6 +75,7 @@ export async function POST(req: NextRequest) {
             prizeName: vc?.prizes?.name,
             prizeId: vc?.prizes?.id,
             termsConditions: vc?.prizes?.terms_conditions,
+            qrCodeUrl: qrRes?.url,
           },
         },
         { status: 400 }
@@ -181,7 +187,10 @@ export async function POST(req: NextRequest) {
         voucher_code_id: voucherId,
       });
 
-    // Step D: Asynchronously dispatch voucher email via Resend (Non-blocking)
+    // Step D: Generate permanent QR code asset and upload to Supabase Storage
+    const { url: qrCodeUrl } = await getOrCreateVoucherQrCodeUrl(uniqueCode);
+
+    // Step E: Asynchronously dispatch voucher email via Resend (Non-blocking)
     if (userEmail) {
       sendVoucherEmail({
         to: userEmail,
@@ -189,6 +198,7 @@ export async function POST(req: NextRequest) {
         voucherCode: uniqueCode,
         prizeName: finalPrizeName || "Voucher Gong cha",
         termsConditions: finalTnc,
+        qrCodeUrl,
       }).catch((emailErr) => {
         console.error("[Email Dispatch Background Error]:", emailErr);
       });
@@ -202,6 +212,7 @@ export async function POST(req: NextRequest) {
         prizeId: finalPrizeId,
         prizeName: finalPrizeName,
         termsConditions: finalTnc,
+        qrCodeUrl,
       },
     });
   } catch (error) {

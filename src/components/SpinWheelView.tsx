@@ -94,6 +94,7 @@ export default function SpinWheelView({ user, onBack }: SpinWheelViewProps) {
   const [wonPrize, setWonPrize] = useState<{
     segment: PrizeSegment;
     uniqueCode: string;
+    qrCodeUrl?: string;
   } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -140,6 +141,7 @@ export default function SpinWheelView({ user, onBack }: SpinWheelViewProps) {
     try {
       let targetPrizeIndex = -1;
       let serverVoucherCode = "";
+      let serverQrUrl = "";
       let serverPrize: PrizeSegment | null = null;
 
       if (user.userId) {
@@ -153,6 +155,7 @@ export default function SpinWheelView({ user, onBack }: SpinWheelViewProps) {
 
         if (res.ok && data.voucher) {
           serverVoucherCode = data.voucher.uniqueCode || data.voucher.code;
+          serverQrUrl = data.voucher.qrCodeUrl || "";
           const matchedFromState = prizes.find(
             (s) => s.id === data.voucher.prizeId
           );
@@ -215,6 +218,7 @@ export default function SpinWheelView({ user, onBack }: SpinWheelViewProps) {
         setWonPrize({
           segment: selectedSegment,
           uniqueCode: generatedCode,
+          qrCodeUrl: serverQrUrl,
         });
 
         confetti({
@@ -681,13 +685,24 @@ export default function SpinWheelView({ user, onBack }: SpinWheelViewProps) {
 
                   {/* Right: High-Contrast QR Code for Cashier Scanner */}
                   <div className="flex flex-col items-center justify-center p-2 bg-white rounded-xl border-[1.5px] border-[#382F2D]/20 shadow-[2px_2px_0px_#382F2D]/15 shrink-0">
-                    <QRCodeSVG
-                      value={wonPrize.uniqueCode}
-                      size={88}
-                      level="M"
-                      fgColor="#382F2D"
-                      bgColor="#FFFFFF"
-                    />
+                    {wonPrize.qrCodeUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={wonPrize.qrCodeUrl}
+                        alt={`QR Code ${wonPrize.uniqueCode}`}
+                        width={88}
+                        height={88}
+                        className="w-[88px] h-[88px] object-contain rounded"
+                      />
+                    ) : (
+                      <QRCodeSVG
+                        value={wonPrize.uniqueCode}
+                        size={88}
+                        level="M"
+                        fgColor="#382F2D"
+                        bgColor="#FFFFFF"
+                      />
+                    )}
                     <span className="text-[8px] font-extrabold tracking-widest text-[#382F2D]/50 uppercase mt-1">
                       SCAN FOR POS
                     </span>
