@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  typescript: {
+    ignoreBuildErrors: false,
+  },
   allowedDevOrigins: [
     "hanging-photograph-thinks-clips.trycloudflare.com",
     "brian-propecia-deputy-intelligence.trycloudflare.com",
