@@ -6,6 +6,8 @@ const resendFromEmail = process.env.RESEND_FROM_EMAIL || "Gong cha Indonesia <vo
 
 export const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
+const GONGCHA_LOGO_URL = "https://vuffuslxeovrugjuwkfh.supabase.co/storage/v1/object/public/vouchers/assets/gongcha-logo.png";
+
 interface SendVoucherEmailParams {
   to: string;
   userName: string;
@@ -45,6 +47,7 @@ export async function sendVoucherEmail({
     }
 
     const cidName = `qr-${voucherCode}`;
+    const tncText = termsConditions || "1. Berlaku mulai 7 November 2026 hanya di gerai Gong cha Central Park Mall (UG Floor). 2. Tunjukkan QR code ini ke kasir untuk di-scan. 3. Tidak dapat diuangkan atau digabungkan dengan promo lain.";
 
     const html = `
 <!DOCTYPE html>
@@ -55,100 +58,137 @@ export async function sendVoucherEmail({
   <title>E-Voucher Gong cha Grand Opening</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #F4F1EA; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #382F2D;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #F4F1EA; padding: 32px 16px;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #F4F1EA; padding: 36px 16px;">
     <tr>
       <td align="center">
-        <!-- Main Card -->
-        <table role="presentation" width="100%" style="max-width: 520px; background-color: #FFFFFF; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.06); border: 1px solid #ECE6DB;" cellspacing="0" cellpadding="0" border="0">
+
+        <!-- Outer Container -->
+        <table role="presentation" width="100%" style="max-width: 520px;" cellspacing="0" cellpadding="0" border="0">
           
-          <!-- Header Banner -->
+          <!-- Top Greeting Card -->
           <tr>
-            <td style="background-color: #C10230; padding: 36px 24px; text-align: center;">
-              <h1 style="margin: 0; color: #FFFFFF; font-size: 28px; font-weight: 800; letter-spacing: -0.5px;">Gong cha</h1>
-              <p style="margin: 6px 0 0 0; color: #FFD4DC; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px;">
-                Grand Opening • Central Park Mall
+            <td style="padding: 0 0 20px 0; text-align: center;">
+              <h2 style="margin: 0 0 6px 0; font-size: 24px; font-weight: 800; color: #382F2D; letter-spacing: -0.5px;">
+                🎉 Selamat, ${userName}!
+              </h2>
+              <p style="margin: 0; font-size: 14px; color: #574B48; line-height: 1.5;">
+                Anda memenangkan E-Voucher perayaan Grand Opening gerai baru <strong>Gong cha Central Park Mall</strong>!
               </p>
             </td>
           </tr>
 
-          <!-- Content Body -->
+          <!-- THE EXACT PHYSICAL VOUCHER TICKET (Identical to Spin Wheel Card) -->
           <tr>
-            <td style="padding: 32px 28px;">
-              <p style="margin: 0 0 16px 0; font-size: 16px; color: #574B48;">
-                Halo <strong>${userName}</strong>,
-              </p>
-              <p style="margin: 0 0 24px 0; font-size: 15px; line-height: 1.5; color: #574B48;">
-                Selamat! Anda berhasil memenangkan E-Voucher eksklusif perayaan Grand Opening gerai baru <strong>Gong cha Central Park Mall (UG Floor)</strong>!
-              </p>
-
-              <!-- Voucher Box with QR Code -->
-              <div style="background-color: #FAF8F2; border: 2px dashed #C10230; border-radius: 16px; padding: 24px 16px; text-align: center; margin-bottom: 24px;">
-                <span style="display: inline-block; font-size: 11px; font-weight: 700; color: #C10230; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 6px;">
-                  Hadiah Anda
-                </span>
-                <div style="font-size: 22px; font-weight: 800; color: #C10230; margin-bottom: 16px;">
-                  ${prizeName}
-                </div>
-
-                <!-- QR Code Box (Uses Hosted HTTPS CDN with CID Fallback) -->
-                <div style="margin: 0 auto 16px auto; display: inline-block; background-color: #FFFFFF; padding: 12px; border-radius: 12px; border: 1px solid #E8DFD1; box-shadow: 0 4px 12px rgba(0,0,0,0.04);">
-                  <img src="${directQrUrl || `cid:${cidName}`}" alt="QR Code ${voucherCode}" width="160" height="160" style="display: block; width: 160px; height: 160px; border: 0;" />
-                </div>
+            <td>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #FFFFFF; border-radius: 20px; border: 2.5px solid #382F2D; box-shadow: 5px 5px 0px #382F2D; overflow: hidden;">
                 
-                <div>
-                  <div style="display: inline-block; background-color: #FFFFFF; border: 1px solid #E8DFD1; border-radius: 10px; padding: 8px 18px; margin: 4px 0;">
-                    <span style="font-family: 'Courier New', Courier, monospace; font-size: 20px; font-weight: 900; letter-spacing: 3px; color: #382F2D;">
-                      ${voucherCode}
-                    </span>
-                  </div>
-                </div>
-
-                <p style="margin: 10px 0 0 0; font-size: 12px; font-weight: 500; color: #8F807B;">
-                  Scan QR code ini di kasir saat melakukan pemesanan
-                </p>
-              </div>
-
-              <!-- Event Details -->
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #F8F6F0; border-radius: 12px; padding: 14px 16px; margin-bottom: 24px;">
+                <!-- Ticket Header Section -->
                 <tr>
-                  <td style="font-size: 13px; line-height: 1.6; color: #574B48;">
-                    📍 <strong>Lokasi:</strong> Gong cha Central Park Mall (UG Floor)<br>
-                    🗓️ <strong>Mulai Berlaku:</strong> 7 November 2026<br>
-                    ⏰ <strong>Waktu:</strong> Sesuai jam operasional mall
+                  <td style="padding: 24px 24px 18px 24px; border-bottom: 2px dashed #D6CEC5;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                      <tr>
+                        <!-- Left: Badge & Prize Title -->
+                        <td valign="top" style="text-align: left;">
+                          <div style="display: inline-block; padding: 4px 12px; background-color: #F5DADF; border: 1px solid rgba(193, 2, 48, 0.3); border-radius: 999px; margin-bottom: 10px;">
+                            <span style="font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: #C10230; line-height: 1;">
+                              GRAND OPENING VOUCHER
+                            </span>
+                          </div>
+                          <h1 style="margin: 0; font-size: 26px; font-weight: 900; line-height: 1.1; text-transform: uppercase; color: #382F2D; letter-spacing: 0.5px;">
+                            ${prizeName}
+                          </h1>
+                        </td>
+
+                        <!-- Right: Official Gong cha Logo Seal -->
+                        <td valign="top" align="right" width="60" style="padding-left: 12px;">
+                          <img src="${GONGCHA_LOGO_URL}" alt="Gong cha" width="40" height="54" style="display: block; width: 40px; height: 54px; object-fit: contain;" />
+                        </td>
+                      </tr>
+                    </table>
                   </td>
                 </tr>
+
+                <!-- Ticket Middle Body: Unique Code Box + QR Code for Cashier -->
+                <tr>
+                  <td style="padding: 20px 24px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #FAF6F0; border-radius: 16px; border: 1.8px solid #D6CEC5;">
+                      <tr>
+                        <td style="padding: 18px;">
+                          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                            <tr>
+                              <!-- Code & Instructions -->
+                              <td valign="middle" style="text-align: left;">
+                                <div style="font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: #7A6F6B; margin-bottom: 6px;">
+                                  🏷️ OFFICIAL VOUCHER CODE
+                                </div>
+                                <div style="display: inline-block; background-color: #FFFFFF; border: 1.5px solid #382F2D; border-radius: 10px; padding: 8px 16px; box-shadow: 2px 2px 0px #382F2D; margin-bottom: 8px;">
+                                  <span style="font-family: 'Courier New', Courier, monospace; font-size: 22px; font-weight: 900; letter-spacing: 3px; color: #C10230;">
+                                    ${voucherCode}
+                                  </span>
+                                </div>
+                                <p style="margin: 0; font-size: 11px; font-weight: 600; color: #7A6F6B; line-height: 1.4;">
+                                  Scan QR di kasir atau tunjukkan kode saat pemesanan
+                                </p>
+                              </td>
+
+                              <!-- QR Code Box (Exact same asset) -->
+                              <td valign="middle" align="center" width="130" style="padding-left: 12px;">
+                                <div style="background-color: #FFFFFF; padding: 8px; border-radius: 12px; border: 1.5px solid #382F2D; box-shadow: 2px 2px 0px #382F2D; display: inline-block; text-align: center;">
+                                  <img src="${directQrUrl || `cid:${cidName}`}" alt="QR ${voucherCode}" width="104" height="104" style="display: block; width: 104px; height: 104px; border: 0;" />
+                                  <span style="display: block; font-size: 8px; font-weight: 800; letter-spacing: 1.5px; color: #382F2D; text-transform: uppercase; margin-top: 4px;">
+                                    SCAN FOR POS
+                                  </span>
+                                </div>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- Ticket Footer: Meta Details & T&C -->
+                <tr>
+                  <td style="padding: 0 24px 22px 24px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-top: 1px solid #ECE6DB; padding-top: 12px;">
+                      <tr>
+                        <td style="font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #8F807B;">
+                          Guest: <strong>${userName}</strong>
+                        </td>
+                        <td align="right" style="font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #8F807B;">
+                          Central Park • UG Floor
+                        </td>
+                      </tr>
+                      <tr>
+                        <td colspan="2" style="padding-top: 8px;">
+                          <p style="margin: 0; font-size: 11px; line-height: 1.5; color: #6E615D;">
+                            ${tncText}
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
               </table>
-
-              <!-- Terms & Conditions -->
-              ${
-                termsConditions
-                  ? `
-              <div style="border-top: 1px solid #ECE6DB; padding-top: 16px; margin-top: 16px;">
-                <p style="margin: 0 0 6px 0; font-size: 12px; font-weight: 700; color: #382F2D;">Syarat & Ketentuan:</p>
-                <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #7A6F6B;">
-                  ${termsConditions}
-                </p>
-              </div>
-              `
-                  : ""
-              }
-
-              <p style="margin: 28px 0 0 0; font-size: 14px; text-align: center; color: #8F807B;">
-                Sampai jumpa di Gong cha Central Park Mall! 🧋✨
-              </p>
             </td>
           </tr>
 
-          <!-- Footer -->
+          <!-- Bottom Notice -->
           <tr>
-            <td style="background-color: #FAF8F2; border-top: 1px solid #ECE6DB; padding: 20px; text-align: center;">
+            <td style="padding: 24px 12px 12px 12px; text-align: center;">
+              <p style="margin: 0 0 6px 0; font-size: 13px; font-weight: 600; color: #574B48;">
+                📍 Gong cha Central Park Mall (UG Floor) • Mulai Berlaku 7 Nov 2026
+              </p>
               <p style="margin: 0; font-size: 11px; color: #9C8E8A;">
-                © 2026 Gong cha Indonesia. All rights reserved.<br>
-                Email ini dikirim otomatis sebagai konfirmasi kepemilikan voucher.
+                © 2026 Gong cha Indonesia. Tunjukkan tiket ini langsung dari layar ponsel Anda ke kasir.
               </p>
             </td>
           </tr>
+
         </table>
+
       </td>
     </tr>
   </table>
