@@ -1,7 +1,8 @@
 import { Resend } from "resend";
+import QRCode from "qrcode";
 
 const resendApiKey = process.env.RESEND_API_KEY;
-const resendFromEmail = process.env.RESEND_FROM_EMAIL || "Gong cha Indonesia <onboarding@resend.dev>";
+const resendFromEmail = process.env.RESEND_FROM_EMAIL || "Gong cha Indonesia <voucher@gongcha-id.app>";
 
 export const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
@@ -31,6 +32,21 @@ export async function sendVoucherEmail({
   }
 
   try {
+    // Generate QR Code data URL for instant scanning by cashier POS
+    let qrDataUrl = "";
+    try {
+      qrDataUrl = await QRCode.toDataURL(voucherCode, {
+        width: 240,
+        margin: 1,
+        color: {
+          dark: "#18181B",
+          light: "#FFFFFF",
+        },
+      });
+    } catch (qrErr) {
+      console.error("[Resend Email] QR generation error:", qrErr);
+    }
+
     const html = `
 <!DOCTYPE html>
 <html>
@@ -66,22 +82,36 @@ export async function sendVoucherEmail({
                 Selamat! Anda berhasil memenangkan E-Voucher eksklusif perayaan Grand Opening gerai baru <strong>Gong cha Central Park Mall (UG Floor)</strong>!
               </p>
 
-              <!-- Voucher Box -->
+              <!-- Voucher Box with QR Code -->
               <div style="background-color: #FAF8F2; border: 2px dashed #C10230; border-radius: 16px; padding: 24px 16px; text-align: center; margin-bottom: 24px;">
-                <span style="display: inline-block; font-size: 11px; font-weight: 7px; color: #C10230; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 6px;">
+                <span style="display: inline-block; font-size: 11px; font-weight: 700; color: #C10230; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 6px;">
                   Hadiah Anda
                 </span>
-                <div style="font-size: 22px; font-weight: 800; color: #C10230; margin-bottom: 14px;">
+                <div style="font-size: 22px; font-weight: 800; color: #C10230; margin-bottom: 16px;">
                   ${prizeName}
                 </div>
-                
-                <div style="display: inline-block; background-color: #FFFFFF; border: 1px solid #E8DFD1; border-radius: 10px; padding: 10px 20px; margin: 4px 0;">
-                  <span style="font-family: 'Courier New', Courier, monospace; font-size: 22px; font-weight: 900; letter-spacing: 3px; color: #382F2D;">
-                    ${voucherCode}
-                  </span>
+
+                ${
+                  qrDataUrl
+                    ? `
+                <!-- QR Code Box -->
+                <div style="margin: 0 auto 16px auto; display: inline-block; background-color: #FFFFFF; padding: 12px; border-radius: 12px; border: 1px solid #E8DFD1; box-shadow: 0 4px 12px rgba(0,0,0,0.04);">
+                  <img src="${qrDataUrl}" alt="QR Code ${voucherCode}" width="160" height="160" style="display: block; width: 160px; height: 160px;" />
                 </div>
-                <p style="margin: 8px 0 0 0; font-size: 12px; color: #8F807B;">
-                  Tunjukkan kode atau email ini ke kasir saat memesan
+                `
+                    : ""
+                }
+                
+                <div>
+                  <div style="display: inline-block; background-color: #FFFFFF; border: 1px solid #E8DFD1; border-radius: 10px; padding: 8px 18px; margin: 4px 0;">
+                    <span style="font-family: 'Courier New', Courier, monospace; font-size: 20px; font-weight: 900; letter-spacing: 3px; color: #382F2D;">
+                      ${voucherCode}
+                    </span>
+                  </div>
+                </div>
+
+                <p style="margin: 10px 0 0 0; font-size: 12px; font-weight: 500; color: #8F807B;">
+                  Scan QR code ini di kasir saat melakukan pemesanan
                 </p>
               </div>
 
