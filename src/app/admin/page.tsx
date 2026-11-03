@@ -85,7 +85,7 @@ interface CustomerRecord {
 
 interface ActivityItem {
   id: string;
-  type: "SPIN_CLAIM" | "REDEEMED";
+  type: "SPIN_CLAIM" | "REDEEMED" | "REVOKED";
   timestamp: string;
   guestName: string;
   whatsapp: string;
@@ -1695,19 +1695,41 @@ export default function AdminDashboardPage() {
                   {recentActivities.slice(0, 8).map((act) => (
                     <div
                       key={act.id}
-                      className="p-3 rounded-xl bg-[#FAF7F2] border border-zinc-300 flex items-center justify-between gap-3"
+                      className={`p-3 rounded-xl border flex items-center justify-between gap-3 ${
+                        act.type === "REVOKED"
+                          ? "bg-[#FEF2F2] border-[#F87171]"
+                          : act.type === "REDEEMED"
+                          ? "bg-[#F0FDF4] border-[#86EFAC]"
+                          : "bg-[#FAF7F2] border-zinc-300"
+                      }`}
                     >
                       <div className="min-w-0">
-                        <div className="text-xs font-bold text-[#18181B] truncate">
-                          {act.guestName}{" "}
-                          <span className="font-normal text-zinc-500">
-                            {act.type === "REDEEMED"
+                        <div className="text-xs font-bold text-[#18181B] truncate flex items-center gap-1.5">
+                          <span>{act.guestName}</span>
+                          <span
+                            className={`font-semibold ${
+                              act.type === "REVOKED"
+                                ? "text-red-700"
+                                : act.type === "REDEEMED"
+                                ? "text-emerald-700"
+                                : "text-zinc-500"
+                            }`}
+                          >
+                            {act.type === "REVOKED"
+                              ? "voucher dibatalkan (revoked)"
+                              : act.type === "REDEEMED"
                               ? "menukar voucher di kasir"
                               : "klaim hadiah spin"}
                           </span>
                         </div>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="font-mono text-[11px] font-extrabold px-1.5 py-0.2 rounded bg-white border border-[#18181B]">
+                          <span
+                            className={`font-mono text-[11px] font-extrabold px-1.5 py-0.2 rounded border ${
+                              act.type === "REVOKED"
+                                ? "bg-white text-red-700 border-red-300 line-through"
+                                : "bg-white text-[#18181B] border-[#18181B]"
+                            }`}
+                          >
                             {act.code}
                           </span>
                           <span className="text-[11px] font-semibold text-zinc-600 truncate">
@@ -2352,10 +2374,15 @@ export default function AdminDashboardPage() {
                 </div>
 
                 {selectedCustomer.voucher.status === "REVOKED" ? (
-                  <div className="p-3 rounded-xl bg-[#FCA5A5]/40 border border-[#18181B] text-xs font-bold text-red-950 flex items-start gap-2">
-                    <Ban className="w-4 h-4 shrink-0 mt-0.5" />
+                  <div className="p-3.5 rounded-xl bg-[#FEF2F2] border-2 border-[#F87171] text-xs font-bold text-red-950 flex items-start gap-2.5">
+                    <Ban className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                     <div>
-                      Voucher ini telah di-REVOKE dan dikembalikan ke kuota tersedia. Customer ini tidak dapat melakukan spin ulang.
+                      <div className="text-red-700 font-extrabold text-xs">
+                        VOUCHER DIBATALKAN (REVOKED)
+                      </div>
+                      <div className="text-[11px] text-zinc-600 font-medium mt-0.5">
+                        Kode voucher lama ini telah dihanguskan. Sistem telah membuat kode baru ke kuota hadiah. Customer ini diblokir dari spin ulang.
+                      </div>
                     </div>
                   </div>
                 ) : (

@@ -30,6 +30,8 @@ export async function GET(req: NextRequest) {
         assigned_to_user_id,
         assigned_at,
         redeemed_at,
+        revoked_at,
+        revoked_reason,
         created_at,
         prizes (
           id,
@@ -258,10 +260,10 @@ export async function GET(req: NextRequest) {
       .filter((item) => item.count >= 2)
       .sort((a, b) => b.count - a.count);
 
-    // Recent Activity Feed (Spins + Redemptions sorted by time)
+    // Recent Activity Feed (Spins + Redemptions + Revocations sorted by time)
     const recentActivities: {
       id: string;
-      type: "SPIN_CLAIM" | "REDEEMED";
+      type: "SPIN_CLAIM" | "REDEEMED" | "REVOKED";
       timestamp: string;
       guestName: string;
       whatsapp: string;
@@ -272,6 +274,26 @@ export async function GET(req: NextRequest) {
     }[] = [];
 
     for (const v of safeVouchers) {
+      const isRevoked = v.status === "REVOKED" || v.unique_code.startsWith("REVOKED-");
+      const displayCode = v.unique_code.replace(/^REVOKED-/, "");
+
+      if (isRevoked) {
+        // Record as REVOKED activity
+        const revokeTime = v.revoked_at || v.redeemed_at || v.created_at;
+        recentActivities.push({
+          id: `revoke-${v.id}`,
+          type: "REVOKED",
+          timestamp: revokeTime,
+          guestName: v.guest_users?.full_name || "Guest",
+          whatsapp: v.guest_users?.whatsapp || "",
+          email: v.guest_users?.email || "",
+          code: displayCode,
+          prizeName: v.prizes?.name || v.prize_id,
+          prizeId: v.prize_id,
+        });
+        continue; // Do not show as redeem or claim
+      }
+
       if (v.assigned_at) {
         recentActivities.push({
           id: `claim-${v.id}`,
