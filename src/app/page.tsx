@@ -49,9 +49,14 @@ export default function HomePage() {
   const [name, setName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [email, setEmail] = useState("");
+  const [websiteHp, setWebsiteHp] = useState(""); // Honeypot field
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Queue Modal & Velocity Throttling State
+  const [queueModalOpen, setQueueModalOpen] = useState(false);
+  const [cooldownSeconds, setCooldownSeconds] = useState(10);
 
   // Real-time verification states
   const [isCheckingPhone, setIsCheckingPhone] = useState(false);
@@ -172,8 +177,21 @@ export default function HomePage() {
     };
   }, [email]);
 
-  const validateAndSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Live countdown timer for queue modal
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+    if (queueModalOpen && cooldownSeconds > 0) {
+      timer = setInterval(() => {
+        setCooldownSeconds((prev) => (prev > 0 ? prev - 1 : 0));
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [queueModalOpen, cooldownSeconds]);
+
+  const validateAndSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     const newErrors: {
       name?: string;
       whatsapp?: string;
@@ -216,12 +234,20 @@ export default function HomePage() {
           fullName: name.trim(),
           whatsapp: cleanedPhone,
           email: email.trim(),
+          website_hp: websiteHp,
         }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
+        if (res.status === 429 && data.error === "QUEUE_ACTIVE") {
+          setCooldownSeconds(data.cooldownRemaining || 8);
+          setQueueModalOpen(true);
+          setIsLoading(false);
+          return;
+        }
+
         setErrors({
           general: data.error || "Registration failed. Please try again.",
         });
@@ -229,6 +255,7 @@ export default function HomePage() {
         return;
       }
 
+      setQueueModalOpen(false);
       setRegisteredUser({
         name: name.trim(),
         whatsapp: cleanedPhone,
@@ -419,6 +446,18 @@ export default function HomePage() {
             {errors.email}
           </p>
         )}
+      </div>
+
+      {/* Invisible Honeypot Field (Traps automated spam bots) */}
+      <div className="hidden" aria-hidden="true" style={{ display: "none" }}>
+        <input
+          type="text"
+          name="website_hp"
+          value={websiteHp}
+          onChange={(e) => setWebsiteHp(e.target.value)}
+          tabIndex={-1}
+          autoComplete="off"
+        />
       </div>
 
       {/* Terms & Privacy Consent Checkbox (Opsi A) */}
@@ -948,6 +987,64 @@ export default function HomePage() {
                 Saya Mengerti & Setuju
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* =====================================================================
+          QUEUE / ANTREAN PENDAFTARAN NEO-BRUTALIST MODAL (OPSI 1)
+          Triggered when high-velocity attempts from the same IP occur
+         ===================================================================== */}
+      {queueModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 bg-[#382F2D]/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in"
+        >
+          <div className="w-full max-w-sm bg-white rounded-3xl border-[2.5px] border-[#18181B] shadow-[6px_6px_0px_#18181B] p-6 text-center space-y-4 relative">
+            {/* Top Friendly Badge */}
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#FDE047] border-[1.8px] border-[#18181B] rounded-full text-[10px] font-extrabold uppercase tracking-wider text-[#18181B] shadow-[1.5px_1.5px_0px_#18181B]">
+              <span>⏱️</span>
+              <span>ANTREAN PENDAFTARAN</span>
+            </div>
+
+            {/* Display Header */}
+            <h3 className="font-display text-[26px] leading-[1.05] uppercase text-[#382F2D]">
+              TUNGGU SEBENTAR YA!
+            </h3>
+
+            {/* Friendly Non-Technical Copy (Opsi 1) */}
+            <p className="text-[12.5px] leading-relaxed text-[#382F2D]/80 font-medium px-1">
+              Pendaftaran lagi rame banget nih! Demi keamanan kuota voucher kamu, tunggu hitungan mundur sebentar ya.
+            </p>
+
+            {/* Prominent Countdown Box */}
+            <div className="py-4 px-3 bg-[#FAF6F0] rounded-2xl border-[2px] border-dashed border-[#18181B]/35 flex flex-col items-center justify-center">
+              <span className="font-mono text-[34px] sm:text-[38px] font-black tracking-wider text-[#C10230] leading-none">
+                {String(cooldownSeconds).padStart(2, "0")} DETIK
+              </span>
+              <span className="text-[9.5px] font-bold text-[#382F2D]/60 uppercase tracking-widest mt-1">
+                Jeda Antrean Singkat
+              </span>
+            </div>
+
+            {/* Action CTA Button */}
+            <button
+              type="button"
+              disabled={isLoading || cooldownSeconds > 0}
+              onClick={() => validateAndSubmit()}
+              className={`w-full py-3.5 font-display text-[17px] tracking-wider uppercase rounded-2xl border-[2.5px] border-[#18181B] transition-all select-none flex items-center justify-center gap-2 ${
+                cooldownSeconds === 0 && !isLoading
+                  ? "bg-[#C10230] hover:bg-[#821518] text-[#FAF8F2] shadow-[4px_4px_0px_#18181B] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_#18181B] cursor-pointer"
+                  : "bg-[#E6E1D8] text-[#382F2D]/45 shadow-[2px_2px_0px_#18181B]/40 cursor-not-allowed opacity-90"
+              }`}
+            >
+              {cooldownSeconds > 0
+                ? `LANJUTKAN PENDAFTARAN (${cooldownSeconds}s)`
+                : isLoading
+                ? "MEMPROSES..."
+                : "DAFTAR SEKARANG"}
+            </button>
           </div>
         </div>
       )}

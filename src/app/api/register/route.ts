@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { supabaseAdmin } from "@/lib/supabase";
+import { checkDisposableEmail, checkIpVelocity } from "@/lib/antispam";
 
 const RegisterSchema = z.object({
   fullName: z
@@ -13,6 +14,7 @@ const RegisterSchema = z.object({
     .min(9, "Invalid WhatsApp number")
     .max(16, "Invalid WhatsApp number"),
   email: z.string().email("Invalid email address").max(100, "Email is too long"),
+  website_hp: z.string().optional(), // Invisible Honeypot
 });
 
 export async function POST(req: NextRequest) {
@@ -27,7 +29,37 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { fullName, whatsapp, email } = parsed.data;
+    const { fullName, whatsapp, email, website_hp } = parsed.data;
+
+    // 0A. Invisible Honeypot check (Silent bot trap)
+    if (website_hp && website_hp.trim().length > 0) {
+      console.warn("[Anti-Bot Honeypot Triggered] Ignored bot submission:", { ip: req.headers.get("x-forwarded-for") });
+      // Fake success response to confuse and waste bot's time
+      return NextResponse.json({ status: "READY_TO_SPIN", userId: "00000000-0000-0000-0000-000000000000" });
+    }
+
+    // 0B. Disposable Burner Email filter
+    if (checkDisposableEmail(email)) {
+      return NextResponse.json(
+        { error: "Mohon gunakan alamat email pribadi aktif (Gmail, Yahoo, iCloud, dll)." },
+        { status: 400 }
+      );
+    }
+
+    // 0C. Smart IP Velocity Cooldown Check
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    const velocity = checkIpVelocity(ip);
+    if (!velocity.allowed) {
+      return NextResponse.json(
+        {
+          error: "QUEUE_ACTIVE",
+          message: "Pendaftaran lagi ramai nih! Tunggu sebentar ya.",
+          cooldownRemaining: velocity.cooldownRemaining,
+        },
+        { status: 429 }
+      );
+    }
+
     const cleanedPhone = whatsapp.replace(/\D/g, "");
 
     // 1. Check if user already exists with this phone or email
@@ -63,7 +95,6 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Insert new guest user
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0] || "unknown";
     const userAgent = req.headers.get("user-agent") || "unknown";
 
     const { data: newUser, error: insertError } = await supabaseAdmin
