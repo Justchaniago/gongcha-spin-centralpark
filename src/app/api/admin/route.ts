@@ -450,7 +450,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // ACTION 4: Resend Voucher Email via Resend
+    // ACTION 4: Resend Voucher Email via Resend (Single or Batch)
     if (action === "resend_email") {
       const { email, userName, voucherCode, prizeName, termsConditions } = body;
       const result = await sendVoucherEmail({
@@ -471,6 +471,136 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         success: true,
         message: `E-Voucher ${voucherCode} berhasil dikirim ulang ke ${email}`,
+      });
+    }
+
+    // ACTION 4B: BATCH RESEND EMAIL (Multiple or All with Throttling & REVOKED skip)
+    if (action === "batch_resend_email") {
+      const { customerIds, filterMode, targetPrizeId } = body;
+      // customerIds: string[] (optional for selected), or filterMode: 'all' | 'unredeemed' | 'redeemed'
+
+      // Fetch all eligible customer records with active voucher
+      let query = supabaseAdmin
+        .from("guest_users")
+        .select(`
+          id,
+          full_name,
+          email,
+          user_agent,
+          spin_transactions (
+            id,
+            voucher_codes (
+              id,
+              unique_code,
+              status,
+              prize_id,
+              prizes (
+                name,
+                terms_conditions
+              )
+            )
+          )
+        `);
+
+      if (Array.isArray(customerIds) && customerIds.length > 0) {
+        query = query.in("id", customerIds);
+      }
+
+      const { data: users, error: fetchErr } = await query;
+
+      if (fetchErr || !users) {
+        return NextResponse.json(
+          { error: "Gagal mengambil data customer untuk broadcast email" },
+          { status: 500 }
+        );
+      }
+
+      interface TargetItem {
+        email: string;
+        userName: string;
+        voucherCode: string;
+        prizeName: string;
+        termsConditions?: string;
+      }
+
+      const targets: TargetItem[] = [];
+
+      for (const u of users) {
+        // Skip revoked users
+        if (String(u.user_agent || "").includes("[REVOKED")) continue;
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const txList = u.spin_transactions as any[];
+        const tx = Array.isArray(txList) && txList.length > 0 ? txList[0] : null;
+        const vc = tx?.voucher_codes;
+
+        if (!vc || vc.status === "REVOKED") continue;
+
+        // Filter status if filterMode is set
+        if (filterMode === "unredeemed" && vc.status !== "ASSIGNED") continue;
+        if (filterMode === "redeemed" && vc.status !== "REDEEMED") continue;
+
+        // Filter prize if targetPrizeId specified
+        if (targetPrizeId && targetPrizeId !== "ALL" && vc.prize_id !== targetPrizeId) continue;
+
+        if (u.email && u.email.includes("@")) {
+          targets.push({
+            email: u.email,
+            userName: u.full_name || "Customer",
+            voucherCode: vc.unique_code,
+            prizeName: vc.prizes?.name || "Voucher Gong cha",
+            termsConditions: vc.prizes?.terms_conditions,
+          });
+        }
+      }
+
+      if (targets.length === 0) {
+        return NextResponse.json({
+          success: true,
+          total: 0,
+          sent: 0,
+          failed: 0,
+          message: "Tidak ada customer valid yang memenuhi kriteria pengiriman",
+        });
+      }
+
+      // Execute throttled sending (~120ms between dispatches to safely stay within Resend tier rate limits)
+      let sentCount = 0;
+      let failedCount = 0;
+      const failures: { email: string; error: string }[] = [];
+
+      for (const target of targets) {
+        try {
+          const res = await sendVoucherEmail({
+            to: target.email,
+            userName: target.userName,
+            voucherCode: target.voucherCode,
+            prizeName: target.prizeName,
+            termsConditions: target.termsConditions,
+          });
+
+          if (res.success) {
+            sentCount++;
+          } else {
+            failedCount++;
+            failures.push({ email: target.email, error: res.error || "Gagal" });
+          }
+        } catch (dispatchErr: any) {
+          failedCount++;
+          failures.push({ email: target.email, error: dispatchErr?.message || "Exception" });
+        }
+
+        // 120ms throttle delay
+        await new Promise((resolve) => setTimeout(resolve, 120));
+      }
+
+      return NextResponse.json({
+        success: true,
+        total: targets.length,
+        sent: sentCount,
+        failed: failedCount,
+        failures: failures.slice(0, 10),
+        message: `Berhasil mengirim ${sentCount} dari ${targets.length} email voucher`,
       });
     }
 

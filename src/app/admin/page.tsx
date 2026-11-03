@@ -30,6 +30,10 @@ import {
   QrCode,
   Zap,
   Ban,
+  Send,
+  CheckSquare,
+  Square,
+  Radio,
 } from "lucide-react";
 
 // ============================================================================
@@ -450,6 +454,22 @@ export default function AdminDashboardPage() {
   const [cmdKOpen, setCmdKOpen] = useState(false);
   const [cmdKQuery, setCmdKQuery] = useState("");
 
+  // Multi-select & Batch Resend Email States
+  const [selectedCustomerIds, setSelectedCustomerIds] = useState<Set<string>>(
+    new Set()
+  );
+  const [batchModalOpen, setBatchModalOpen] = useState(false);
+  const [batchMode, setBatchMode] = useState<"selected" | "unredeemed" | "all">(
+    "selected"
+  );
+  const [batchPrizeFilter, setBatchPrizeFilter] = useState<string>("ALL");
+  const [isSendingBatch, setIsSendingBatch] = useState(false);
+  const [batchResult, setBatchResult] = useState<{
+    total: number;
+    sent: number;
+    failed: number;
+  } | null>(null);
+
   // Toast
   const [toast, setToast] = useState<{
     message: string;
@@ -695,6 +715,13 @@ export default function AdminDashboardPage() {
     );
     if (!confirmed) return;
 
+    // Deselect if currently selected in batch set
+    setSelectedCustomerIds((prev) => {
+      const next = new Set(prev);
+      next.delete(customer.id);
+      return next;
+    });
+
     if (useDemoData) {
       const nowIso = new Date().toISOString();
       const prevStatus = customer.voucher.status;
@@ -787,6 +814,89 @@ export default function AdminDashboardPage() {
       showToast("Gagal menghubungi server", "error");
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  // Toggle selection for a single customer
+  const toggleSelectCustomer = (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setSelectedCustomerIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  // Toggle select all visible eligible customers
+  const toggleSelectAllVisible = () => {
+    const eligibleVisible = filteredCustomers.filter(
+      (c) => c.voucher && c.voucher.status !== "REVOKED"
+    );
+    const allSelected = eligibleVisible.every((c) =>
+      selectedCustomerIds.has(c.id)
+    );
+
+    setSelectedCustomerIds((prev) => {
+      const next = new Set(prev);
+      if (allSelected) {
+        eligibleVisible.forEach((c) => next.delete(c.id));
+      } else {
+        eligibleVisible.forEach((c) => next.add(c.id));
+      }
+      return next;
+    });
+  };
+
+  const handleOpenBatchModal = (mode: "selected" | "unredeemed" | "all") => {
+    setBatchMode(mode);
+    setBatchResult(null);
+    setBatchModalOpen(true);
+  };
+
+  const handleExecuteBatchResend = async () => {
+    setIsSendingBatch(true);
+    setBatchResult(null);
+
+    try {
+      const payload: Record<string, unknown> = {
+        pin,
+        action: "batch_resend_email",
+        targetPrizeId: batchPrizeFilter,
+      };
+
+      if (batchMode === "selected") {
+        payload.customerIds = Array.from(selectedCustomerIds);
+      } else if (batchMode === "unredeemed") {
+        payload.filterMode = "unredeemed";
+      } else if (batchMode === "all") {
+        payload.filterMode = "all";
+      }
+
+      const res = await fetch("/api/admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setBatchResult({
+          total: data.total || 0,
+          sent: data.sent || 0,
+          failed: data.failed || 0,
+        });
+        showToast(data.message || `Berhasil mengirim ${data.sent} email`);
+        if (batchMode === "selected") {
+          setSelectedCustomerIds(new Set());
+        }
+      } else {
+        showToast(data.error || "Gagal melakukan batch broadcast email", "error");
+      }
+    } catch {
+      showToast("Gagal menghubungi server", "error");
+    } finally {
+      setIsSendingBatch(false);
     }
   };
 
@@ -1663,15 +1773,15 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            {/* Search & Category Select */}
+            {/* Search, Category Select, and Broadcast Action */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-              <div className="md:col-span-8 relative">
+              <div className="md:col-span-5 relative">
                 <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Cari nama customer, nomor WhatsApp, alamat email, atau kode voucher..."
+                  placeholder="Cari nama, WA, email, atau voucher..."
                   className="w-full h-11 pl-10 pr-10 rounded-xl bg-[#FAF7F2] border-2 border-[#18181B] text-sm font-semibold text-[#18181B] placeholder:text-zinc-400 focus:outline-none focus:bg-white"
                 />
                 {searchQuery && (
@@ -1699,13 +1809,42 @@ export default function AdminDashboardPage() {
                   ))}
                 </select>
               </div>
+
+              <div className="md:col-span-3 flex items-center justify-end">
+                <button
+                  type="button"
+                  onClick={() => handleOpenBatchModal("all")}
+                  className="w-full h-11 px-3 rounded-xl bg-[#C10230] hover:bg-[#821518] text-white border-2 border-[#18181B] shadow-[3px_3px_0px_#18181B] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none text-xs font-extrabold flex items-center justify-center gap-2 cursor-pointer transition-all"
+                  title="Kirim ulang email voucher ke semua customer"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>Broadcast Email</span>
+                </button>
+              </div>
             </div>
 
-            {/* Clean Table */}
+            {/* Clean Table with Multi-Select Checkboxes */}
             <div className="overflow-x-auto rounded-xl border-2 border-[#18181B]">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-[#FAF7F2] border-b-2 border-[#18181B] text-xs font-extrabold uppercase text-zinc-700">
+                    <th className="py-3.5 px-3 w-10 text-center" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        type="button"
+                        onClick={toggleSelectAllVisible}
+                        className="p-1 rounded text-zinc-700 hover:text-[#18181B] cursor-pointer"
+                        title="Pilih semua yang terlihat"
+                      >
+                        {filteredCustomers.length > 0 &&
+                        filteredCustomers
+                          .filter((c) => c.voucher && c.voucher.status !== "REVOKED")
+                          .every((c) => selectedCustomerIds.has(c.id)) ? (
+                          <CheckSquare className="w-4 h-4 text-[#C10230]" />
+                        ) : (
+                          <Square className="w-4 h-4 text-zinc-400" />
+                        )}
+                      </button>
+                    </th>
                     <th className="py-3.5 px-4">Nama Customer</th>
                     <th className="py-3.5 px-4">Kontak (WA & Email)</th>
                     <th className="py-3.5 px-4">Kode Voucher</th>
@@ -1715,72 +1854,114 @@ export default function AdminDashboardPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-200 text-xs">
-                  {filteredCustomers.map((c) => (
-                    <tr
-                      key={c.id}
-                      onClick={() => setSelectedCustomer(c)}
-                      className="hover:bg-[#FEF9C3]/60 transition-colors cursor-pointer"
-                    >
-                      <td className="py-4 px-4">
-                        <div className="font-extrabold text-sm text-[#18181B]">
-                          {c.fullName}
-                        </div>
-                        <div className="text-[11px] text-zinc-500 mt-0.5">
-                          IP: {c.ipAddress}
-                        </div>
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="font-mono font-bold text-[#18181B]">
-                          {c.whatsapp}
-                        </div>
-                        <div className="text-zinc-500 mt-0.5">{c.email}</div>
-                      </td>
-                      <td className="py-4 px-4">
-                        {c.voucher ? (
-                          <span className="font-mono font-extrabold text-xs px-2.5 py-1 rounded-md bg-[#FAF7F2] border border-[#18181B]">
-                            {c.voucher.code}
-                          </span>
-                        ) : (
-                          <span className="text-zinc-400">—</span>
-                        )}
-                      </td>
-                      <td className="py-4 px-4 font-bold text-[#18181B]">
-                        {c.voucher ? c.voucher.prizeName : "Belum Spin"}
-                      </td>
-                      <td className="py-4 px-4">
-                        {c.voucher ? (
-                          <span
-                            className={`inline-block px-2.5 py-1 rounded-md border border-[#18181B] text-[11px] font-extrabold ${
-                              c.voucher.status === "REDEEMED"
-                                ? "bg-[#86EFAC] text-[#18181B]"
-                                : c.voucher.status === "REVOKED"
-                                ? "bg-[#FCA5A5] text-[#18181B]"
-                                : "bg-[#BFDBFE] text-[#18181B]"
-                            }`}
-                          >
-                            {c.voucher.status}
-                          </span>
-                        ) : (
-                          <span className="px-2 py-1 rounded-md bg-zinc-200 text-[10px] font-bold">
-                            REGISTERED
-                          </span>
-                        )}
-                      </td>
-                      <td
-                        className="py-4 px-4 text-right"
-                        onClick={(e) => e.stopPropagation()}
+                  {filteredCustomers.map((c) => {
+                    const isSelected = selectedCustomerIds.has(c.id);
+                    const isEligible = !!c.voucher && c.voucher.status !== "REVOKED";
+
+                    return (
+                      <tr
+                        key={c.id}
+                        onClick={() => setSelectedCustomer(c)}
+                        className={`transition-colors cursor-pointer ${
+                          isSelected
+                            ? "bg-[#FEF08A]/70"
+                            : "hover:bg-[#FEF9C3]/60"
+                        }`}
                       >
-                        <button
-                          type="button"
-                          onClick={() => setSelectedCustomer(c)}
-                          className="px-3 py-1.5 rounded-lg bg-white hover:bg-[#FDE047] border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B] font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer"
+                        <td
+                          className="py-4 px-3 text-center"
+                          onClick={(e) => e.stopPropagation()}
                         >
-                          <Eye className="w-3.5 h-3.5" />
-                          <span>Detail</span>
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                          {isEligible ? (
+                            <button
+                              type="button"
+                              onClick={(e) => toggleSelectCustomer(c.id, e)}
+                              className="p-1 rounded text-zinc-700 hover:text-[#18181B] cursor-pointer"
+                            >
+                              {isSelected ? (
+                                <CheckSquare className="w-4 h-4 text-[#C10230]" />
+                              ) : (
+                                <Square className="w-4 h-4 text-zinc-400" />
+                              )}
+                            </button>
+                          ) : (
+                            <span className="text-zinc-300 text-xs">—</span>
+                          )}
+                        </td>
+                        <td className="py-4 px-4">
+                          <div className="font-extrabold text-sm text-[#18181B]">
+                            {c.fullName}
+                          </div>
+                          <div className="text-[11px] text-zinc-500 mt-0.5">
+                            IP: {c.ipAddress}
+                          </div>
+                        </td>
+                        <td className="py-4 px-4">
+                          <div className="font-mono font-bold text-[#18181B]">
+                            {c.whatsapp}
+                          </div>
+                          <div className="text-zinc-500 mt-0.5">{c.email}</div>
+                        </td>
+                        <td className="py-4 px-4">
+                          {c.voucher ? (
+                            <span className="font-mono font-extrabold text-xs px-2.5 py-1 rounded-md bg-[#FAF7F2] border border-[#18181B]">
+                              {c.voucher.code}
+                            </span>
+                          ) : (
+                            <span className="text-zinc-400">—</span>
+                          )}
+                        </td>
+                        <td className="py-4 px-4 font-bold text-[#18181B]">
+                          {c.voucher ? c.voucher.prizeName : "Belum Spin"}
+                        </td>
+                        <td className="py-4 px-4">
+                          {c.voucher ? (
+                            <span
+                              className={`inline-block px-2.5 py-1 rounded-md border border-[#18181B] text-[11px] font-extrabold ${
+                                c.voucher.status === "REDEEMED"
+                                  ? "bg-[#86EFAC] text-[#18181B]"
+                                  : c.voucher.status === "REVOKED"
+                                  ? "bg-[#FCA5A5] text-[#18181B]"
+                                  : "bg-[#BFDBFE] text-[#18181B]"
+                              }`}
+                            >
+                              {c.voucher.status}
+                            </span>
+                          ) : (
+                            <span className="px-2 py-1 rounded-md bg-zinc-200 text-[10px] font-bold">
+                              REGISTERED
+                            </span>
+                          )}
+                        </td>
+                        <td
+                          className="py-4 px-4 text-right"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="flex items-center justify-end gap-1.5">
+                            {c.voucher && c.voucher.status !== "REVOKED" && (
+                              <button
+                                type="button"
+                                onClick={() => handleResendEmail(c)}
+                                disabled={actionLoading === `email-${c.id}`}
+                                className="p-1.5 rounded-lg bg-white hover:bg-[#FAF7F2] border-2 border-[#18181B] text-zinc-700 hover:text-[#C10230] shadow-[2px_2px_0px_#18181B] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none cursor-pointer"
+                                title="Kirim ulang email voucher"
+                              >
+                                <Mail className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => setSelectedCustomer(c)}
+                              className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-[#FDE047] border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B] font-bold text-xs inline-flex items-center gap-1 cursor-pointer"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>Detail</span>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -2231,6 +2412,239 @@ export default function AdminDashboardPage() {
                 Pengunjung ini belum memutar Spinwheel.
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* =====================================================================
+          FLOATING BATCH ACTION BAR (When 1+ Customers Selected)
+          ===================================================================== */}
+      {selectedCustomerIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-xl bg-[#18181B] text-white rounded-2xl border-2 border-[#18181B] p-4 shadow-[6px_6px_0px_rgba(0,0,0,0.4)] flex flex-wrap items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-4">
+          <div className="flex items-center gap-3">
+            <span className="w-8 h-8 rounded-xl bg-[#FDE047] text-[#18181B] font-extrabold text-sm flex items-center justify-center">
+              {selectedCustomerIds.size}
+            </span>
+            <div>
+              <div className="font-extrabold text-sm text-[#FAF7F2]">
+                Customer Terpilih
+              </div>
+              <div className="text-[11px] text-zinc-400">
+                Siap untuk kirim ulang email voucher
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setSelectedCustomerIds(new Set())}
+              className="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold transition-colors cursor-pointer"
+            >
+              Batal
+            </button>
+            <button
+              type="button"
+              onClick={() => handleOpenBatchModal("selected")}
+              className="px-4 py-2 rounded-xl bg-[#C10230] hover:bg-[#821518] text-white border border-white/20 shadow-[2px_2px_0px_#FFFFFF] font-extrabold text-xs uppercase flex items-center gap-1.5 transition-all cursor-pointer"
+            >
+              <Send className="w-3.5 h-3.5" />
+              <span>Kirim Email ({selectedCustomerIds.size})</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* =====================================================================
+          BATCH RESEND EMAIL CONFIRMATION / PROGRESS MODAL
+          ===================================================================== */}
+      {batchModalOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
+          onClick={() => !isSendingBatch && setBatchModalOpen(false)}
+        >
+          <div
+            className="w-full max-w-lg rounded-2xl border-2 border-[#18181B] bg-white p-6 shadow-[6px_6px_0px_#18181B] space-y-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4 border-b-2 border-zinc-100 pb-4">
+              <div>
+                <span className="inline-block px-2.5 py-0.5 bg-[#C10230] text-white border border-[#18181B] rounded text-[10px] font-extrabold uppercase tracking-wider">
+                  Broadcast / Resend Email
+                </span>
+                <h3 className="text-xl font-extrabold text-[#18181B] mt-1.5">
+                  Kirim Ulang Tiket E-Voucher
+                </h3>
+                <p className="text-xs text-zinc-500 mt-0.5">
+                  Setiap customer akan menerima email dengan kartu tiket voucher dan QR code resmi
+                </p>
+              </div>
+              {!isSendingBatch && (
+                <button
+                  type="button"
+                  onClick={() => setBatchModalOpen(false)}
+                  className="w-8 h-8 rounded-lg bg-[#FAF7F2] hover:bg-zinc-200 border border-[#18181B] flex items-center justify-center cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {/* Scope / Filter Mode Selector (Only if not in 'selected' mode) */}
+            {batchMode !== "selected" && (
+              <div className="space-y-3">
+                <label className="text-xs font-bold text-zinc-700 block">
+                  Pilih Target Penerima:
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    disabled={isSendingBatch}
+                    onClick={() => setBatchMode("unredeemed")}
+                    className={`p-3 rounded-xl border-2 border-[#18181B] text-left transition-all cursor-pointer ${
+                      batchMode === "unredeemed"
+                        ? "bg-[#FEF08A] shadow-[2px_2px_0px_#18181B]"
+                        : "bg-[#FAF7F2] hover:bg-zinc-100"
+                    }`}
+                  >
+                    <div className="font-extrabold text-xs text-[#18181B]">
+                      Hanya Belum Tukar
+                    </div>
+                    <div className="text-[11px] text-zinc-600 mt-0.5">
+                      Status ASSIGNED (Belum redeem)
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={isSendingBatch}
+                    onClick={() => setBatchMode("all")}
+                    className={`p-3 rounded-xl border-2 border-[#18181B] text-left transition-all cursor-pointer ${
+                      batchMode === "all"
+                        ? "bg-[#FEF08A] shadow-[2px_2px_0px_#18181B]"
+                        : "bg-[#FAF7F2] hover:bg-zinc-100"
+                    }`}
+                  >
+                    <div className="font-extrabold text-xs text-[#18181B]">
+                      Semua Customer Aktif
+                    </div>
+                    <div className="text-[11px] text-zinc-600 mt-0.5">
+                      Termasuk yang sudah REDEEMED
+                    </div>
+                  </button>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-zinc-700 block mb-1">
+                    Filter Kategori Hadiah:
+                  </label>
+                  <select
+                    disabled={isSendingBatch}
+                    value={batchPrizeFilter}
+                    onChange={(e) => setBatchPrizeFilter(e.target.value)}
+                    className="w-full h-10 px-3 rounded-xl bg-[#FAF7F2] border-2 border-[#18181B] text-xs font-bold text-[#18181B]"
+                  >
+                    <option value="ALL">Semua Kategori Hadiah</option>
+                    {prizeStats.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {/* Target Summary Box */}
+            <div className="p-4 rounded-xl bg-[#FAF7F2] border-2 border-[#18181B] space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-zinc-600 font-medium">Mode Pengiriman:</span>
+                <span className="font-extrabold text-[#18181B] uppercase">
+                  {batchMode === "selected"
+                    ? `${selectedCustomerIds.size} Customer Terpilih`
+                    : batchMode === "unredeemed"
+                    ? "Broadcast: Belum Tukar Saja"
+                    : "Broadcast: Seluruh Customer"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-zinc-600 font-medium">Perlindungan Revoke:</span>
+                <span className="font-extrabold text-emerald-700">
+                  Aktif (Customer REVOKED otomatis dilewati)
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-zinc-600 font-medium">Rate Throttling:</span>
+                <span className="font-extrabold text-zinc-800">
+                  Aman (~120ms jeda per email untuk Resend)
+                </span>
+              </div>
+            </div>
+
+            {/* Live Progress / Result Box */}
+            {isSendingBatch && (
+              <div className="p-4 rounded-xl bg-[#FEF9C3] border-2 border-[#18181B] text-center space-y-2">
+                <RefreshCw className="w-5 h-5 text-[#C10230] animate-spin mx-auto" />
+                <div className="text-xs font-extrabold text-[#18181B]">
+                  Sedang Mengirim Email Batch...
+                </div>
+                <div className="text-[11px] text-zinc-600">
+                  Mohon jangan menutup jendela ini hingga proses selesai.
+                </div>
+              </div>
+            )}
+
+            {batchResult && (
+              <div
+                className={`p-4 rounded-xl border-2 border-[#18181B] text-xs space-y-1 ${
+                  batchResult.failed === 0 ? "bg-[#DCFCE7]" : "bg-[#FEF08A]"
+                }`}
+              >
+                <div className="font-extrabold text-sm text-[#18181B]">
+                  Laporan Pengiriman Email:
+                </div>
+                <div className="text-zinc-700">
+                  • Total target: <strong>{batchResult.total}</strong> email
+                </div>
+                <div className="text-emerald-700 font-bold">
+                  • Berhasil terkirim: <strong>{batchResult.sent}</strong> email
+                </div>
+                {batchResult.failed > 0 && (
+                  <div className="text-red-700 font-bold">
+                    • Gagal: <strong>{batchResult.failed}</strong> email
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-end gap-2 pt-2 border-t-2 border-zinc-100">
+              <button
+                type="button"
+                disabled={isSendingBatch}
+                onClick={() => setBatchModalOpen(false)}
+                className="px-4 py-2.5 rounded-xl bg-[#FAF7F2] hover:bg-zinc-200 border-2 border-[#18181B] font-bold text-xs cursor-pointer"
+              >
+                {batchResult ? "Tutup" : "Batal"}
+              </button>
+
+              {!batchResult && (
+                <button
+                  type="button"
+                  disabled={
+                    isSendingBatch ||
+                    (batchMode === "selected" && selectedCustomerIds.size === 0)
+                  }
+                  onClick={handleExecuteBatchResend}
+                  className="px-5 py-2.5 rounded-xl bg-[#C10230] hover:bg-[#821518] text-white border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B] font-extrabold text-xs uppercase flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>
+                    {isSendingBatch ? "Mengirim..." : "Kirim Sekarang"}
+                  </span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
