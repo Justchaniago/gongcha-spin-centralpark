@@ -636,8 +636,9 @@ export async function POST(req: NextRequest) {
             .from("voucher_codes")
             .update({
               unique_code: safeRevokedCode,
-              status: "REDEEMED",
-              redeemed_at: nowIso,
+              status: "REVOKED",
+              revoked_at: nowIso,
+              revoked_reason: "Dibatalkan oleh Admin melalui Panel Kontrol",
             })
             .eq("id", voucherId);
 
