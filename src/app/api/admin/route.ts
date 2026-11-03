@@ -604,7 +604,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // ACTION 5: REVOKE VOUCHER (Return voucher to AVAILABLE quota pool & lock user from spinning again)
+    // ACTION 5: REVOKE VOUCHER (Permanently invalidate old code, generate fresh replacement code to pool, & lock user)
     if (action === "revoke_voucher") {
       const { userId, voucherId, voucherCode, prizeName } = body;
       if (!userId) {
@@ -616,28 +616,51 @@ export async function POST(req: NextRequest) {
 
       const nowIso = new Date().toISOString();
 
-      // 1. Return voucher code back to AVAILABLE pool so quota increases by +1
+      // 1. Permanently invalidate old voucher code by prefixing with REVOKED- so it can never be used at cashier
+      let targetPrizeId: string | null = null;
       if (voucherId) {
-        const { error: resetVoucherErr } = await supabaseAdmin
+        const { data: currentVoucher } = await supabaseAdmin
           .from("voucher_codes")
-          .update({
-            status: "AVAILABLE",
-            assigned_to_user_id: null,
-            assigned_at: null,
-            redeemed_at: null,
-          })
-          .eq("id", voucherId);
+          .select("id, unique_code, prize_id")
+          .eq("id", voucherId)
+          .maybeSingle();
 
-        if (resetVoucherErr) {
-          console.error("Revoke reset voucher error:", resetVoucherErr);
-          return NextResponse.json(
-            { error: "Gagal mengembalikan voucher ke kuota" },
-            { status: 500 }
-          );
+        if (currentVoucher) {
+          targetPrizeId = currentVoucher.prize_id;
+          const oldCode = currentVoucher.unique_code;
+          const safeRevokedCode = oldCode.startsWith("REVOKED-")
+            ? oldCode
+            : `REVOKED-${oldCode}`;
+
+          await supabaseAdmin
+            .from("voucher_codes")
+            .update({
+              unique_code: safeRevokedCode,
+              status: "REDEEMED",
+              redeemed_at: nowIso,
+            })
+            .eq("id", voucherId);
+
+          // 2. Generate a FRESH, unique voucher code and insert into AVAILABLE pool for this prize
+          const chars = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+          let part1 = "";
+          let part2 = "";
+          for (let i = 0; i < 4; i++) part1 += chars[Math.floor(Math.random() * chars.length)];
+          for (let i = 0; i < 4; i++) part2 += chars[Math.floor(Math.random() * chars.length)];
+          const newCode = `GC-${part1}-${part2}`;
+
+          await supabaseAdmin
+            .from("voucher_codes")
+            .insert({
+              prize_id: targetPrizeId,
+              unique_code: newCode,
+              status: "AVAILABLE",
+              created_at: nowIso,
+            });
         }
       }
 
-      // 2. Mark guest_users record with [REVOKED:...] tag and keep spin_transactions row intact
+      // 3. Mark guest_users record with [REVOKED:...] tag and keep spin_transactions row intact
       // Keeping spin_transactions row ensures uq_guest_one_spin & /api/register & /api/spin permanently block this user
       const { data: existingGuest } = await supabaseAdmin
         .from("guest_users")
@@ -665,7 +688,7 @@ export async function POST(req: NextRequest) {
         revokedAt: nowIso,
         message: `Voucher ${
           voucherCode || ""
-        } berhasil di-REVOKE dan dikembalikan ke kuota tersedia. User telah diblokir dari spin ulang.`,
+        } telah dibatalkan permanen. Sistem telah menambahkan 1 kode voucher baru ke kuota hadiah. User diblokir dari spin ulang.`,
       });
     }
 

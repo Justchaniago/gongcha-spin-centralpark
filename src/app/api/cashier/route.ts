@@ -102,10 +102,11 @@ export async function POST(req: NextRequest) {
           id,
           full_name,
           whatsapp,
-          email
+          email,
+          user_agent
         )
       `)
-      .ilike("unique_code", cleanedCode)
+      .or(`unique_code.ilike.${cleanedCode},unique_code.ilike.REVOKED-${cleanedCode}`)
       .maybeSingle();
 
     if (vError || !voucher) {
@@ -118,7 +119,24 @@ export async function POST(req: NextRequest) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const v: any = voucher;
 
-    // 2. CHECK IF ALREADY REDEEMED
+    // 2. CHECK IF REVOKED OR ALREADY REDEEMED
+    if (v.unique_code.startsWith("REVOKED-") || String(v.guest_users?.user_agent || "").includes("[REVOKED")) {
+      return NextResponse.json(
+        {
+          status: "VOUCHER_REVOKED",
+          error: "VOUCHER_REVOKED",
+          message: "Voucher ini telah DIBATALKAN (REVOKED) oleh Admin dan tidak dapat digunakan lagi.",
+          voucher: {
+            id: v.id,
+            code: v.unique_code.replace(/^REVOKED-/, ""),
+            prizeName: v.prizes?.name,
+            guestName: v.guest_users?.full_name || "Guest",
+          },
+        },
+        { status: 403 }
+      );
+    }
+
     if (v.status === "REDEEMED") {
       return NextResponse.json(
         {
