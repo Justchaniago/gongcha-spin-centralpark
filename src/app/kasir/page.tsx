@@ -83,7 +83,7 @@ export default function CashierPortalPage() {
       localStorage.setItem("gongcha_cashier_pin", targetPin);
       setPinError("");
     } else {
-      setPinError("PIN Kasir tidak sesuai");
+      setPinError("Invalid Cashier PIN");
       setTimeout(() => setPin(""), 350);
     }
   };
@@ -212,8 +212,8 @@ export default function CashierPortalPage() {
         playAudioFeedback("SUCCESS");
         setLastScanResult({
           type: "SUCCESS",
-          title: "Berhasil Ditukarkan",
-          message: "Voucher telah ditandai TERPAKAI di sistem.",
+          title: "Successfully Redeemed",
+          message: "Voucher has been marked as USED in the system.",
           code: data.voucher.code,
           prizeName: data.voucher.prizeName,
           guestName: data.voucher.guestName,
@@ -238,8 +238,8 @@ export default function CashierPortalPage() {
         playAudioFeedback("SUCCESS");
         setLastScanResult({
           type: "CHECKED_VALID",
-          title: "Voucher Aktif & Valid",
-          message: "Siap ditukarkan. Klik tombol di bawah untuk konfirmasi redeem.",
+          title: "Voucher Active & Valid",
+          message: "Ready to redeem. Click button below to confirm redemption.",
           code: data.voucher.code,
           prizeName: data.voucher.prizeName,
           termsConditions: data.voucher.termsConditions,
@@ -251,8 +251,8 @@ export default function CashierPortalPage() {
         playAudioFeedback("ERROR");
         setLastScanResult({
           type: "ALREADY_USED",
-          title: "Sudah Pernah Digunakan",
-          message: data.message || "Voucher ini telah ditukarkan sebelumnya.",
+          title: "Already Used",
+          message: data.message || "This voucher has already been redeemed previously.",
           code: data.voucher?.code || code,
           prizeName: data.voucher?.prizeName,
           guestName: data.voucher?.guestName,
@@ -263,9 +263,9 @@ export default function CashierPortalPage() {
         playAudioFeedback("ERROR");
         setLastScanResult({
           type: "ERROR",
-          title: "Tidak Ditemukan / Tidak Valid",
+          title: "Not Found / Invalid",
           message:
-            data.error || "Kode voucher tidak terdaftar atau belum diklaim.",
+            data.error || "Voucher code not found or not claimed yet.",
           code,
         });
       }
@@ -274,8 +274,8 @@ export default function CashierPortalPage() {
       playAudioFeedback("ERROR");
       setLastScanResult({
         type: "ERROR",
-        title: "Gangguan Koneksi",
-        message: "Gagal menghubungi server. Periksa koneksi internet perangkat.",
+        title: "Connection Error",
+        message: "Failed to connect to server. Please check device internet connection.",
         code,
       });
     } finally {
@@ -309,7 +309,7 @@ export default function CashierPortalPage() {
     } catch (err) {
       console.error("Camera start error:", err);
       setIsScanning(false);
-      alert("Tidak dapat mengakses kamera. Pastikan izin kamera telah diberikan.");
+      alert("Cannot access camera. Please ensure camera permissions are granted.");
     }
   };
 
@@ -361,7 +361,7 @@ export default function CashierPortalPage() {
                 </span>
               </div>
               <h1 className="text-lg font-extrabold text-[#18181B] tracking-tight mt-1">
-                Terminal Validasi Voucher
+                Voucher Validation Terminal
               </h1>
             </div>
           </div>
@@ -370,7 +370,7 @@ export default function CashierPortalPage() {
           <div className="mb-6">
             <div className="flex items-center justify-between mb-2">
               <label className="text-xs font-bold text-zinc-600">
-                Masukkan 4-Digit PIN Kasir
+                Enter 4-Digit Cashier PIN
               </label>
               {pinError && (
                 <span className="text-xs font-bold text-[#C10230]">
@@ -432,7 +432,7 @@ export default function CashierPortalPage() {
               type="button"
               onClick={handlePinBackspace}
               className="h-13 rounded-xl bg-zinc-100 hover:bg-zinc-200 border-2 border-[#18181B] flex items-center justify-center text-[#18181B] transition-colors cursor-pointer select-none"
-              aria-label="Hapus"
+              aria-label="Delete"
             >
               <Delete className="w-5 h-5" />
             </button>
@@ -481,7 +481,7 @@ export default function CashierPortalPage() {
           <div>
             <div className="flex items-center gap-2">
               <span className="font-extrabold text-sm sm:text-base text-[#18181B] tracking-tight">
-                POS Kasir Central Park
+                POS Cashier Central Park
               </span>
               <span className="hidden sm:inline-flex items-center gap-1.5 px-2 py-0.5 bg-[#86EFAC] border border-[#18181B] rounded text-[10px] font-extrabold uppercase">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#18181B]" />
@@ -496,14 +496,14 @@ export default function CashierPortalPage() {
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FEF08A] border-2 border-[#18181B] text-xs font-extrabold text-[#18181B]">
             <TicketCheck className="w-4 h-4 text-[#C10230]" />
             <span>{totalRedeemedCount}</span>
-            <span className="hidden xs:inline">terpakai</span>
+            <span className="hidden xs:inline">redeemed</span>
           </div>
 
           {/* Link to Admin Dashboard */}
           <Link
             href="/admin"
             className="h-9 px-3 rounded-xl border-2 border-[#18181B] bg-white hover:bg-[#FAF7F2] shadow-[2px_2px_0px_#18181B] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none flex items-center gap-1.5 text-xs font-bold text-[#18181B] transition-all"
-            title="Buka Dashboard Analytics & Quota"
+            title="Open Analytics & Quota Dashboard"
           >
             <BarChart3 className="w-3.5 h-3.5 text-[#C10230]" />
             <span className="hidden sm:inline">Dashboard</span>
@@ -514,7 +514,7 @@ export default function CashierPortalPage() {
             type="button"
             onClick={() => setSoundEnabled(!soundEnabled)}
             className="h-9 w-9 rounded-xl border-2 border-[#18181B] bg-white hover:bg-[#FAF7F2] shadow-[2px_2px_0px_#18181B] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none flex items-center justify-center text-[#18181B] transition-all cursor-pointer"
-            title={soundEnabled ? "Suara Beep Aktif" : "Suara Dimatikan"}
+            title={soundEnabled ? "Audio Beep Active" : "Audio Muted"}
           >
             {soundEnabled ? (
               <Volume2 className="w-4 h-4 text-[#18181B]" />
@@ -530,7 +530,7 @@ export default function CashierPortalPage() {
             className="h-9 px-3 rounded-xl border-2 border-[#18181B] bg-white hover:bg-red-100 shadow-[2px_2px_0px_#18181B] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none flex items-center gap-1.5 text-xs font-bold text-red-600 transition-all cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Keluar</span>
+            <span className="hidden sm:inline">Log out</span>
           </button>
         </div>
       </header>
@@ -620,7 +620,7 @@ export default function CashierPortalPage() {
                           className="mt-3.5 w-full py-3 px-4 rounded-xl bg-[#86EFAC] hover:brightness-95 text-[#18181B] border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B] text-xs font-extrabold uppercase tracking-wide transition-all flex items-center justify-center gap-2 cursor-pointer"
                         >
                           <Check className="w-4 h-4 stroke-[2.5]" />
-                          <span>Konfirmasi & Gunakan Voucher Sekarang</span>
+                          <span>Confirm & Redeem Voucher Now</span>
                         </button>
                       )}
                   </div>
@@ -630,7 +630,7 @@ export default function CashierPortalPage() {
                   type="button"
                   onClick={() => setLastScanResult(null)}
                   className="w-7 h-7 rounded-lg bg-white border border-[#18181B] flex items-center justify-center text-[#18181B] cursor-pointer"
-                  aria-label="Tutup notifikasi"
+                  aria-label="Close notification"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -644,12 +644,12 @@ export default function CashierPortalPage() {
             <div className="flex flex-wrap items-center justify-between gap-3 pb-5 mb-5 border-b-2 border-zinc-100">
               <div>
                 <h2 className="text-base font-extrabold text-[#18181B]">
-                  Mode Pemindaian QR
+                  QR Scanning Mode
                 </h2>
                 <p className="text-xs font-medium text-zinc-500 mt-0.5">
                   {autoRedeem
-                    ? "Otomatis potong voucher begitu QR terbaca"
-                    : "Periksa status voucher dulu sebelum dipotong"}
+                    ? "Instantly redeem voucher upon scanning QR"
+                    : "Inspect voucher status first before redeeming"}
                 </p>
               </div>
 
@@ -674,7 +674,7 @@ export default function CashierPortalPage() {
                       : "text-zinc-600 hover:text-[#18181B]"
                   }`}
                 >
-                  Cek Dulu
+                  Check First
                 </button>
               </div>
             </div>
@@ -695,7 +695,7 @@ export default function CashierPortalPage() {
                   className="w-full py-3.5 px-4 bg-[#C10230] hover:bg-[#a30228] active:translate-x-[1px] active:translate-y-[1px] text-white font-extrabold text-sm rounded-xl border-2 border-[#18181B] shadow-[3px_3px_0px_#18181B] active:shadow-none transition-all cursor-pointer flex items-center justify-center gap-2"
                 >
                   <Camera className="w-4 h-4" />
-                  <span>Buka Kamera Scanner QR</span>
+                  <span>Open QR Camera Scanner</span>
                 </button>
               ) : (
                 <button
@@ -704,7 +704,7 @@ export default function CashierPortalPage() {
                   className="w-full py-2.5 px-4 mt-3 bg-[#FAF7F2] hover:bg-zinc-200 text-[#18181B] font-extrabold text-xs rounded-xl border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B] transition-all cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <CameraOff className="w-4 h-4" />
-                  <span>Matikan Kamera</span>
+                  <span>Turn Off Camera</span>
                 </button>
               )}
             </div>
@@ -713,7 +713,7 @@ export default function CashierPortalPage() {
             <div className="relative flex py-1 items-center mb-5">
               <div className="grow border-t-2 border-zinc-100"></div>
               <span className="shrink mx-3 text-[11px] font-bold text-zinc-400 uppercase tracking-wider">
-                Atau Ketik Kode Manual / Barcode Gun
+                Or Enter Code Manually / Barcode Scanner
               </span>
               <div className="grow border-t-2 border-zinc-100"></div>
             </div>
@@ -732,7 +732,7 @@ export default function CashierPortalPage() {
                   type="text"
                   value={manualCode}
                   onChange={(e) => handleManualInputChange(e.target.value)}
-                  placeholder="Contoh: GC-XXXX-XXXX"
+                  placeholder="e.g. GC-XXXX-XXXX"
                   className="w-full h-12 pl-4 pr-9 bg-[#FAF7F2] focus:bg-white border-2 border-[#18181B] rounded-xl font-mono text-sm font-extrabold uppercase tracking-wider text-[#18181B] placeholder:font-sans placeholder:font-medium placeholder:tracking-normal placeholder:text-zinc-400 focus:outline-none transition-colors"
                 />
                 {manualCode && (
@@ -754,7 +754,7 @@ export default function CashierPortalPage() {
                 disabled={isLoading || !manualCode.trim()}
                 className="h-12 px-5 bg-[#18181B] hover:bg-zinc-800 disabled:bg-zinc-200 disabled:text-zinc-400 text-white border-2 border-[#18181B] shadow-[2px_2px_0px_#C10230] disabled:shadow-none rounded-xl text-xs font-extrabold uppercase tracking-wide transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
               >
-                <span>{autoRedeem ? "Redeem" : "Cek"}</span>
+                <span>{autoRedeem ? "Redeem" : "Check"}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </form>
@@ -769,7 +769,7 @@ export default function CashierPortalPage() {
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-[#C10230]" />
                 <h2 className="text-base font-extrabold text-[#18181B]">
-                  Riwayat Penukaran Kasir
+                  Cashier Redemption History
                 </h2>
                 <span className="px-2 py-0.5 rounded bg-[#FAF7F2] border border-[#18181B] text-xs font-bold text-[#18181B]">
                   {redeemHistory.length}
@@ -787,7 +787,7 @@ export default function CashierPortalPage() {
                     isLoadingHistory ? "animate-spin" : ""
                   }`}
                 />
-                <span>Segarkan</span>
+                <span>Refresh</span>
               </button>
             </div>
 
@@ -800,7 +800,7 @@ export default function CashierPortalPage() {
                     type="text"
                     value={historyFilter}
                     onChange={(e) => setHistoryFilter(e.target.value)}
-                    placeholder="Cari kode voucher atau nama tamu di riwayat..."
+                    placeholder="Search voucher code or guest name in history..."
                     className="w-full h-9 pl-9 pr-8 bg-white border-2 border-[#18181B] rounded-xl text-xs font-semibold text-[#18181B] placeholder:text-zinc-400 focus:outline-none"
                   />
                   {historyFilter && (
@@ -822,8 +822,8 @@ export default function CashierPortalPage() {
                 <div className="py-14 px-4 text-center">
                   <p className="text-xs font-semibold text-zinc-500">
                     {historyFilter
-                      ? "Tidak ada riwayat yang cocok dengan pencarian."
-                      : "Belum ada voucher yang ditukarkan."}
+                      ? "No redemptions match your search."
+                      : "No vouchers redeemed yet."}
                   </p>
                 </div>
               ) : (

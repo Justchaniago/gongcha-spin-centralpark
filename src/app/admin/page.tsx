@@ -549,10 +549,10 @@ export default function AdminDashboardPage() {
       setCustomers(DEMO_DATA.customers);
       setRecentActivities(DEMO_DATA.recentActivities);
       setSuspiciousIps(DEMO_DATA.suspiciousIps);
-      showToast("Simulasi Data Demo Aktif", "success");
+      showToast("Demo Simulation Active", "success");
     } else {
       fetchDashboardData();
-      showToast("Kembali ke Database Live Supabase", "success");
+      showToast("Connected to Live Supabase Database", "success");
     }
   };
 
@@ -562,7 +562,7 @@ export default function AdminDashboardPage() {
       localStorage.setItem("gongcha_cashier_pin", targetPin);
       setPinError("");
     } else {
-      setPinError("PIN Admin tidak sesuai");
+      setPinError("Invalid Admin PIN");
       setTimeout(() => setPin(""), 350);
     }
   };
@@ -581,7 +581,7 @@ export default function AdminDashboardPage() {
         totalVouchers: prev.totalVouchers + count,
         totalAvailable: prev.totalAvailable + count,
       }));
-      showToast(`[Demo] +${count} kuota ditambahkan ke ${prizeId}`);
+      showToast(`[Demo] +${count} quota added to ${prizeId}`);
       return;
     }
 
@@ -594,13 +594,13 @@ export default function AdminDashboardPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        showToast(data.message || `Berhasil tambah +${count} voucher`);
+        showToast(data.message || `Successfully added +${count} vouchers`);
         fetchDashboardData(true);
       } else {
-        showToast(data.error || "Gagal menambah stok", "error");
+        showToast(data.error || "Failed to add stock", "error");
       }
     } catch {
-      showToast("Gagal menghubungi server", "error");
+      showToast("Failed to connect to server", "error");
     } finally {
       setActionLoading(null);
     }
@@ -626,7 +626,7 @@ export default function AdminDashboardPage() {
         prev.map((c) => (c.id === customer.id ? updatedCustomer : c))
       );
       setSelectedCustomer(updatedCustomer);
-      showToast(`[Demo] Status voucher diubah ke ${newStatus}`);
+      showToast(`[Demo] Voucher status changed to ${newStatus}`);
       return;
     }
 
@@ -660,10 +660,10 @@ export default function AdminDashboardPage() {
             : null
         );
       } else {
-        showToast(data.error || "Gagal mengubah status", "error");
+        showToast(data.error || "Failed to update status", "error");
       }
     } catch {
-      showToast("Gagal menghubungi server", "error");
+      showToast("Failed to connect to server", "error");
     } finally {
       setActionLoading(null);
     }
@@ -673,7 +673,7 @@ export default function AdminDashboardPage() {
     if (!customer.voucher) return;
     if (useDemoData) {
       showToast(
-        `[Demo] Email voucher ${customer.voucher.code} dikirim ke ${customer.email}`
+        `[Demo] Voucher email ${customer.voucher.code} sent to ${customer.email}`
       );
       return;
     }
@@ -697,10 +697,10 @@ export default function AdminDashboardPage() {
       if (res.ok) {
         showToast(data.message);
       } else {
-        showToast(data.error || "Gagal mengirim email", "error");
+        showToast(data.error || "Failed to send email", "error");
       }
     } catch {
-      showToast("Gagal menghubungi server", "error");
+      showToast("Failed to connect to server", "error");
     } finally {
       setActionLoading(null);
     }
@@ -711,7 +711,7 @@ export default function AdminDashboardPage() {
     if (!customer.voucher || customer.voucher.status === "REVOKED") return;
 
     const confirmed = window.confirm(
-      `Yakin ingin REVOKE voucher ${customer.voucher.code} milik ${customer.fullName}?\n\n• Kode voucher akan dikembalikan ke kuota tersedia (+1).\n• Status customer menjadi REVOKED dan tidak bisa ikut spin lagi.`
+      `Are you sure you want to REVOKE voucher ${customer.voucher.code} for ${customer.fullName}?\n\n• The voucher code will be returned to the available quota pool (+1).\n• Customer status becomes REVOKED and cannot spin again.`
     );
     if (!confirmed) return;
 
@@ -771,7 +771,7 @@ export default function AdminDashboardPage() {
       }));
 
       showToast(
-        `[Demo] Voucher ${customer.voucher.code} di-REVOKE & kembali ke kuota!`
+        `[Demo] Voucher ${customer.voucher.code} REVOKED & returned to quota!`
       );
       return;
     }
@@ -808,10 +808,10 @@ export default function AdminDashboardPage() {
             : null
         );
       } else {
-        showToast(data.error || "Gagal melakukan revoke voucher", "error");
+        showToast(data.error || "Failed to revoke voucher", "error");
       }
     } catch {
-      showToast("Gagal menghubungi server", "error");
+      showToast("Failed to connect to server", "error");
     } finally {
       setActionLoading(null);
     }
@@ -886,15 +886,15 @@ export default function AdminDashboardPage() {
           sent: data.sent || 0,
           failed: data.failed || 0,
         });
-        showToast(data.message || `Berhasil mengirim ${data.sent} email`);
+        showToast(data.message || `Successfully sent ${data.sent} emails`);
         if (batchMode === "selected") {
           setSelectedCustomerIds(new Set());
         }
       } else {
-        showToast(data.error || "Gagal melakukan batch broadcast email", "error");
+        showToast(data.error || "Failed to broadcast batch emails", "error");
       }
     } catch {
-      showToast("Gagal menghubungi server", "error");
+      showToast("Failed to connect to server", "error");
     } finally {
       setIsSendingBatch(false);
     }
@@ -942,7 +942,7 @@ export default function AdminDashboardPage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    showToast(`Exported ${customers.length} baris ke CSV`);
+    showToast(`Exported ${customers.length} rows to CSV`);
   };
 
   const filteredCustomers = useMemo(() => {
@@ -1019,7 +1019,7 @@ export default function AdminDashboardPage() {
                 Gong cha Central Park
               </span>
               <h1 className="text-lg font-extrabold text-[#18181B] tracking-tight mt-1">
-                Dashboard Admin
+                Admin Dashboard
               </h1>
             </div>
           </div>
@@ -1027,7 +1027,7 @@ export default function AdminDashboardPage() {
           <div className="mb-6">
             <div className="flex items-center justify-between mb-2">
               <label className="text-xs font-bold text-zinc-600">
-                Masukkan 4-Digit PIN (2026)
+                Enter 4-Digit PIN (2026)
               </label>
               {pinError && (
                 <span className="text-xs font-bold text-red-600">
@@ -1100,6 +1100,7 @@ export default function AdminDashboardPage() {
               type="button"
               onClick={() => setPin((p) => p.slice(0, -1))}
               className="h-13 rounded-xl bg-zinc-100 hover:bg-zinc-200 border-2 border-[#18181B] flex items-center justify-center text-[#18181B] transition-colors cursor-pointer"
+              aria-label="Delete"
             >
               <Delete className="w-5 h-5" />
             </button>
@@ -1157,7 +1158,7 @@ export default function AdminDashboardPage() {
                 </span>
               </div>
               <p className="text-xs text-zinc-500 hidden sm:block">
-                Monitoring Kuota Voucher & Lookup Customer
+                Voucher Quota Monitoring & Customer Directory
               </p>
             </div>
           </div>
@@ -1171,7 +1172,7 @@ export default function AdminDashboardPage() {
             >
               <span className="flex items-center gap-2 truncate">
                 <Search className="w-4 h-4 text-[#18181B] shrink-0" />
-                <span>Cari customer, No. WA, Email, atau Kode Voucher...</span>
+                <span>Search customer, WhatsApp, Email, or Voucher Code...</span>
               </span>
               <kbd className="px-1.5 py-0.5 text-[10px] font-mono font-bold bg-white text-[#18181B] rounded border border-[#18181B]">
                 ⌘K
@@ -1185,7 +1186,7 @@ export default function AdminDashboardPage() {
               type="button"
               onClick={() => setCmdKOpen(true)}
               className="md:hidden h-10 w-10 rounded-xl bg-[#FAF7F2] border-2 border-[#18181B] flex items-center justify-center"
-              aria-label="Cari Customer"
+              aria-label="Search Customer"
             >
               <Search className="w-4 h-4" />
             </button>
@@ -1197,10 +1198,10 @@ export default function AdminDashboardPage() {
               className={`h-10 px-3.5 rounded-xl border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
                 useDemoData ? "bg-[#FDE047]" : "bg-[#86EFAC]"
               }`}
-              title="Beralih antara Data Live Supabase dan Simulasi Data Demo"
+              title="Toggle between Live Supabase Database and Demo Simulation"
             >
               <Zap className="w-3.5 h-3.5 fill-current" />
-              <span>{useDemoData ? "Data Demo" : "Live DB"}</span>
+              <span>{useDemoData ? "Demo Data" : "Live DB"}</span>
             </button>
 
             {/* Terminal Kasir Link */}
@@ -1209,7 +1210,7 @@ export default function AdminDashboardPage() {
               className="h-10 px-3.5 rounded-xl bg-white hover:bg-[#FAF7F2] border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none text-xs font-bold hidden sm:flex items-center gap-1.5 transition-all"
             >
               <QrCode className="w-3.5 h-3.5" />
-              <span>POS Kasir</span>
+              <span>Cashier POS</span>
             </Link>
 
             {/* Export CSV */}
@@ -1244,7 +1245,7 @@ export default function AdminDashboardPage() {
                 setPin("");
               }}
               className="h-10 w-10 rounded-xl bg-white hover:bg-red-100 border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none flex items-center justify-center text-red-600 transition-all cursor-pointer"
-              title="Keluar"
+              title="Logout"
             >
               <LogOut className="w-4 h-4" />
             </button>
@@ -1256,21 +1257,21 @@ export default function AdminDashboardPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between overflow-x-auto">
             <div className="flex items-center gap-2 py-2.5">
               {[
-                { id: "overview", label: "Ringkasan & Kuota", icon: Layers },
+                { id: "overview", label: "Overview & Quotas", icon: Layers },
                 {
                   id: "customers",
-                  label: `Lookup Customer (${customers.length})`,
+                  label: `Customer Directory (${customers.length})`,
                   icon: Users,
                 },
                 {
                   id: "quotas",
-                  label: "Atur Stok Voucher",
+                  label: "Manage Quotas",
                   icon: Sliders,
                   badge: lowStockPrizes.length || undefined,
                 },
                 {
                   id: "fraud",
-                  label: "Deteksi IP Ganda",
+                  label: "Fraud Telemetry",
                   icon: ShieldAlert,
                   badge: suspiciousIps.length || undefined,
                 },
@@ -1305,7 +1306,7 @@ export default function AdminDashboardPage() {
             </div>
 
             <div className="hidden lg:flex items-center gap-2 text-xs font-medium text-zinc-500">
-              <span>Update terakhir: {lastRefreshed}</span>
+              <span>Last updated: {lastRefreshed}</span>
             </div>
           </div>
         </div>
@@ -1324,11 +1325,11 @@ export default function AdminDashboardPage() {
               </div>
               <div>
                 <h2 className="text-sm font-extrabold text-[#18181B]">
-                  Stok Voucher Menipis ({lowStockPrizes.length} Kategori)
+                  Low Voucher Quota Warning ({lowStockPrizes.length} Categories)
                 </h2>
                 <p className="text-xs font-medium text-zinc-700 mt-0.5">
                   {lowStockPrizes
-                    .map((p) => `${p.name} (tersisa ${p.available})`)
+                    .map((p) => `${p.name} (${p.available} left)`)
                     .join(" • ")}
                 </p>
               </div>
@@ -1343,7 +1344,7 @@ export default function AdminDashboardPage() {
                   className="px-3.5 py-2 rounded-xl bg-white hover:bg-[#86EFAC] border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Tambah +20 {p.shortLabel}</span>
+                  <span>Add +20 {p.shortLabel}</span>
                 </button>
               ))}
             </div>
@@ -1356,7 +1357,7 @@ export default function AdminDashboardPage() {
           <div className="bg-white border-2 border-[#18181B] rounded-2xl p-5 shadow-[4px_4px_0px_#18181B] flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">
-                Total Spin Klaim
+                Total Spins Claimed
               </span>
               <div className="w-9 h-9 rounded-xl bg-[#FEF08A] border-2 border-[#18181B] flex items-center justify-center">
                 <Sparkles className="w-4 h-4 text-[#18181B]" />
@@ -1368,9 +1369,9 @@ export default function AdminDashboardPage() {
               </div>
             </div>
             <div className="pt-3 border-t border-zinc-200 flex items-center justify-between text-xs">
-              <span className="text-zinc-500">Total Pendaftar</span>
+              <span className="text-zinc-500">Total Registered</span>
               <span className="font-bold text-[#18181B]">
-                {kpis.totalGuests} orang
+                {kpis.totalGuests} guests
               </span>
             </div>
           </div>
@@ -1379,7 +1380,7 @@ export default function AdminDashboardPage() {
           <div className="bg-white border-2 border-[#18181B] rounded-2xl p-5 shadow-[4px_4px_0px_#18181B] flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">
-                Sisa Kuota Tersedia
+                Available Stock Left
               </span>
               <div className="w-9 h-9 rounded-xl bg-[#BFDBFE] border-2 border-[#18181B] flex items-center justify-center">
                 <Ticket className="w-4 h-4 text-[#18181B]" />
@@ -1391,9 +1392,9 @@ export default function AdminDashboardPage() {
               </div>
             </div>
             <div className="pt-3 border-t border-zinc-200 flex items-center justify-between text-xs">
-              <span className="text-zinc-500">Total Pool Voucher</span>
+              <span className="text-zinc-500">Total Voucher Pool</span>
               <span className="font-bold text-[#18181B]">
-                {kpis.totalVouchers} kode
+                {kpis.totalVouchers} codes
               </span>
             </div>
           </div>
@@ -1402,7 +1403,7 @@ export default function AdminDashboardPage() {
           <div className="bg-white border-2 border-[#18181B] rounded-2xl p-5 shadow-[4px_4px_0px_#18181B] flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">
-                Sudah Diredeem
+                Redeemed at Cashier
               </span>
               <div className="w-9 h-9 rounded-xl bg-[#86EFAC] border-2 border-[#18181B] flex items-center justify-center">
                 <CheckCircle2 className="w-4 h-4 text-[#18181B]" />
@@ -1417,8 +1418,8 @@ export default function AdminDashboardPage() {
               </span>
             </div>
             <div className="pt-3 border-t border-zinc-200 flex items-center justify-between text-xs">
-              <span className="text-zinc-500">Konversi Kasir</span>
-              <span className="font-bold text-emerald-700">Tervalidasi POS</span>
+              <span className="text-zinc-500">POS Conversion</span>
+              <span className="font-bold text-emerald-700">Validated</span>
             </div>
           </div>
 
@@ -1426,7 +1427,7 @@ export default function AdminDashboardPage() {
           <div className="bg-white border-2 border-[#18181B] rounded-2xl p-5 shadow-[4px_4px_0px_#18181B] flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">
-                Belum Ditukar
+                Unredeemed (Active)
               </span>
               <div className="w-9 h-9 rounded-xl bg-[#FECACA] border-2 border-[#18181B] flex items-center justify-center">
                 <Users className="w-4 h-4 text-[#18181B]" />
@@ -1438,8 +1439,8 @@ export default function AdminDashboardPage() {
               </div>
             </div>
             <div className="pt-3 border-t border-zinc-200 flex items-center justify-between text-xs">
-              <span className="text-zinc-500">Status Voucher</span>
-              <span className="font-bold text-zinc-800">Aktif di Customer</span>
+              <span className="text-zinc-500">Voucher Status</span>
+              <span className="font-bold text-zinc-800">Held by Customer</span>
             </div>
           </div>
         </section>
@@ -1454,10 +1455,10 @@ export default function AdminDashboardPage() {
               <div className="flex flex-wrap items-center justify-between gap-4 pb-5 mb-6 border-b-2 border-zinc-100">
                 <div>
                   <h2 className="text-lg font-extrabold text-[#18181B]">
-                    Kuota & Redeem Voucher per Hadiah
+                    Quota & Redemptions per Prize
                   </h2>
                   <p className="text-xs text-zinc-500 mt-0.5">
-                    Pantau sisa kuota tersedia vs voucher yang sudah ditukarkan di kasir
+                    Track available stock vs redeemed vouchers at cashier POS
                   </p>
                 </div>
 
@@ -1473,7 +1474,7 @@ export default function AdminDashboardPage() {
                   </span>
                   <span className="flex items-center gap-1.5">
                     <span className="w-3 h-3 rounded-xs bg-zinc-200 border border-[#18181B] inline-block" />
-                    Sisa
+                    Available
                   </span>
                 </div>
               </div>
@@ -1507,7 +1508,7 @@ export default function AdminDashboardPage() {
                           </span>
                           {isLow && (
                             <span className="px-2 py-0.5 rounded bg-[#FCA5A5] border border-[#18181B] text-[10px] font-extrabold uppercase">
-                              Sisa {prize.available}!
+                              Only {prize.available} left!
                             </span>
                           )}
                         </div>
@@ -1515,15 +1516,15 @@ export default function AdminDashboardPage() {
                         <div className="flex items-center gap-3">
                           <div className="text-xs font-bold text-zinc-700 tabular-nums">
                             <span className="text-emerald-700">
-                              {prize.redeemed} redeem
+                              {prize.redeemed} redeemed
                             </span>{" "}
                             •{" "}
                             <span className="text-blue-700">
-                              {prize.assigned} klaim
+                              {prize.assigned} claimed
                             </span>{" "}
                             •{" "}
                             <span className="text-[#18181B] font-extrabold">
-                              {prize.available}/{prize.total} sisa
+                              {prize.available}/{prize.total} left
                             </span>
                           </div>
 
@@ -1532,7 +1533,7 @@ export default function AdminDashboardPage() {
                             onClick={() => handleTopupStock(prize.id, 10)}
                             disabled={actionLoading === `topup-${prize.id}`}
                             className="px-2.5 py-1 rounded-lg bg-white hover:bg-[#FDE047] border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none text-xs font-extrabold flex items-center gap-1 cursor-pointer"
-                            title="Tambah +10 kuota voucher"
+                            title="Add +10 voucher quota"
                           >
                             <Plus className="w-3 h-3" />
                             <span>10</span>
@@ -1560,13 +1561,13 @@ export default function AdminDashboardPage() {
 
                       <div className="mt-2 flex items-center justify-between text-xs text-zinc-600 font-medium">
                         <span>
-                          Peluang RNG: <strong>{prize.theoreticalShare}%</strong>{" "}
-                          (Bobot {prize.probabilityWeight})
+                          RNG Probability: <strong>{prize.theoreticalShare}%</strong>{" "}
+                          (Weight {prize.probabilityWeight})
                         </span>
                         <span>
-                          Total Keluar:{" "}
+                          Total Distributed:{" "}
                           <strong>
-                            {prize.claimedTotal} voucher (
+                            {prize.claimedTotal} vouchers (
                             {prize.total > 0
                               ? Math.round(
                                   (prize.claimedTotal / prize.total) * 100
@@ -1589,10 +1590,10 @@ export default function AdminDashboardPage() {
                 <div className="flex items-center justify-between pb-4 mb-4 border-b-2 border-zinc-100">
                   <div>
                     <h2 className="text-lg font-extrabold text-[#18181B]">
-                      Lookup Cepat Customer
+                      Quick Customer Lookup
                     </h2>
                     <p className="text-xs text-zinc-500 mt-0.5">
-                      Klik nama customer untuk lihat detail & aksi voucher
+                      Click customer to view details & voucher actions
                     </p>
                   </div>
                   <button
@@ -1600,7 +1601,7 @@ export default function AdminDashboardPage() {
                     onClick={() => setActiveTab("customers")}
                     className="px-3 py-1.5 rounded-lg bg-[#FAF7F2] hover:bg-[#FDE047] border-2 border-[#18181B] text-xs font-bold transition-colors cursor-pointer"
                   >
-                    Semua ({customers.length})
+                    All ({customers.length})
                   </button>
                 </div>
 
@@ -1611,7 +1612,7 @@ export default function AdminDashboardPage() {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Ketik Nama, No. WA, Email, atau Kode GC-..."
+                    placeholder="Type Name, WhatsApp, Email, or GC-... code"
                     className="w-full h-11 pl-10 pr-9 rounded-xl bg-[#FAF7F2] border-2 border-[#18181B] text-xs font-semibold text-[#18181B] placeholder:text-zinc-400 focus:outline-none focus:bg-white"
                   />
                   {searchQuery && (
@@ -1662,7 +1663,7 @@ export default function AdminDashboardPage() {
                           </div>
                         ) : (
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-zinc-200 border border-[#18181B]">
-                            BELUM SPIN
+                            NO SPIN
                           </span>
                         )}
                       </div>
@@ -1671,7 +1672,7 @@ export default function AdminDashboardPage() {
 
                   {filteredCustomers.length === 0 && (
                     <div className="py-8 text-center text-xs font-medium text-zinc-500">
-                      Customer tidak ditemukan.
+                      No customer found.
                     </div>
                   )}
                 </div>
@@ -1683,7 +1684,7 @@ export default function AdminDashboardPage() {
                   <div className="flex items-center gap-2">
                     <Activity className="w-4 h-4 text-[#C10230]" />
                     <h2 className="text-base font-extrabold text-[#18181B]">
-                      Aktivitas Real-Time
+                      Real-Time Activity
                     </h2>
                   </div>
                   <span className="px-2 py-0.5 rounded bg-[#86EFAC] border border-[#18181B] text-[10px] font-extrabold uppercase">
@@ -1716,10 +1717,10 @@ export default function AdminDashboardPage() {
                             }`}
                           >
                             {act.type === "REVOKED"
-                              ? "voucher dibatalkan (revoked)"
+                              ? "voucher revoked & quota returned"
                               : act.type === "REDEEMED"
-                              ? "menukar voucher di kasir"
-                              : "klaim hadiah spin"}
+                              ? "redeemed voucher at cashier"
+                              : "claimed spin prize"}
                           </span>
                         </div>
                         <div className="flex items-center gap-2 mt-1">
@@ -1745,7 +1746,7 @@ export default function AdminDashboardPage() {
 
                   {recentActivities.length === 0 && (
                     <div className="py-8 text-center text-xs text-zinc-500">
-                      Belum ada aktivitas.
+                      No activity recorded yet.
                     </div>
                   )}
                 </div>
@@ -1762,21 +1763,21 @@ export default function AdminDashboardPage() {
             <div className="flex flex-wrap items-center justify-between gap-4 pb-5 border-b-2 border-zinc-100">
               <div>
                 <h2 className="text-xl font-extrabold text-[#18181B]">
-                  Database Pengunjung & Voucher ({filteredCustomers.length})
+                  Customer Database & Vouchers ({filteredCustomers.length})
                 </h2>
                 <p className="text-xs text-zinc-500 mt-0.5">
-                  Klik baris customer untuk mengirim ulang voucher via WA/Email atau mengubah status redeem
+                  Click customer row to resend voucher via WhatsApp/Email or change redemption status
                 </p>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
                 {(
                   [
-                    { id: "ALL", label: "Semua" },
-                    { id: "ASSIGNED", label: "Belum Tukar (Assigned)" },
-                    { id: "REDEEMED", label: "Sudah Dipakai (Redeemed)" },
-                    { id: "REVOKED", label: "Dibatalkan (Revoked)" },
-                    { id: "NO_SPIN", label: "Belum Spin" },
+                    { id: "ALL", label: "All" },
+                    { id: "ASSIGNED", label: "Unredeemed (Assigned)" },
+                    { id: "REDEEMED", label: "Redeemed" },
+                    { id: "REVOKED", label: "Revoked" },
+                    { id: "NO_SPIN", label: "No Spin" },
                   ] as const
                 ).map((st) => (
                   <button
@@ -1803,7 +1804,7 @@ export default function AdminDashboardPage() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Cari nama, WA, email, atau voucher..."
+                  placeholder="Search name, WhatsApp, email, or voucher code..."
                   className="w-full h-11 pl-10 pr-10 rounded-xl bg-[#FAF7F2] border-2 border-[#18181B] text-sm font-semibold text-[#18181B] placeholder:text-zinc-400 focus:outline-none focus:bg-white"
                 />
                 {searchQuery && (
@@ -1823,10 +1824,10 @@ export default function AdminDashboardPage() {
                   onChange={(e) => setPrizeFilter(e.target.value)}
                   className="w-full h-11 px-3.5 rounded-xl bg-[#FAF7F2] border-2 border-[#18181B] text-xs font-bold text-[#18181B] focus:outline-none cursor-pointer"
                 >
-                  <option value="ALL">Semua Kategori Hadiah</option>
+                  <option value="ALL">All Prize Categories</option>
                   {prizeStats.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.name} ({p.claimedTotal} klaim)
+                      {p.name} ({p.claimedTotal} claimed)
                     </option>
                   ))}
                 </select>
@@ -1837,7 +1838,7 @@ export default function AdminDashboardPage() {
                   type="button"
                   onClick={() => handleOpenBatchModal("all")}
                   className="w-full h-11 px-3 rounded-xl bg-[#C10230] hover:bg-[#821518] text-white border-2 border-[#18181B] shadow-[3px_3px_0px_#18181B] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none text-xs font-extrabold flex items-center justify-center gap-2 cursor-pointer transition-all"
-                  title="Kirim ulang email voucher ke semua customer"
+                  title="Resend voucher email to all active customers"
                 >
                   <Send className="w-3.5 h-3.5" />
                   <span>Broadcast Email</span>
@@ -1855,7 +1856,7 @@ export default function AdminDashboardPage() {
                         type="button"
                         onClick={toggleSelectAllVisible}
                         className="p-1 rounded text-zinc-700 hover:text-[#18181B] cursor-pointer"
-                        title="Pilih semua yang terlihat"
+                        title="Select all visible"
                       >
                         {filteredCustomers.length > 0 &&
                         filteredCustomers
@@ -1867,12 +1868,12 @@ export default function AdminDashboardPage() {
                         )}
                       </button>
                     </th>
-                    <th className="py-3.5 px-4">Nama Customer</th>
-                    <th className="py-3.5 px-4">Kontak (WA & Email)</th>
-                    <th className="py-3.5 px-4">Kode Voucher</th>
-                    <th className="py-3.5 px-4">Hadiah</th>
+                    <th className="py-3.5 px-4">Customer Name</th>
+                    <th className="py-3.5 px-4">Contact (WA & Email)</th>
+                    <th className="py-3.5 px-4">Voucher Code</th>
+                    <th className="py-3.5 px-4">Prize</th>
                     <th className="py-3.5 px-4">Status</th>
-                    <th className="py-3.5 px-4 text-right">Aksi</th>
+                    <th className="py-3.5 px-4 text-right">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-200 text-xs">
@@ -1934,7 +1935,7 @@ export default function AdminDashboardPage() {
                           )}
                         </td>
                         <td className="py-4 px-4 font-bold text-[#18181B]">
-                          {c.voucher ? c.voucher.prizeName : "Belum Spin"}
+                          {c.voucher ? c.voucher.prizeName : "No Spin Yet"}
                         </td>
                         <td className="py-4 px-4">
                           {c.voucher ? (
@@ -1966,7 +1967,7 @@ export default function AdminDashboardPage() {
                                 onClick={() => handleResendEmail(c)}
                                 disabled={actionLoading === `email-${c.id}`}
                                 className="p-1.5 rounded-lg bg-white hover:bg-[#FAF7F2] border-2 border-[#18181B] text-zinc-700 hover:text-[#C10230] shadow-[2px_2px_0px_#18181B] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none cursor-pointer"
-                                title="Kirim ulang email voucher"
+                                title="Resend voucher email"
                               >
                                 <Mail className="w-3.5 h-3.5" />
                               </button>
@@ -1977,7 +1978,7 @@ export default function AdminDashboardPage() {
                               className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-[#FDE047] border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B] font-bold text-xs inline-flex items-center gap-1 cursor-pointer"
                             >
                               <Eye className="w-3.5 h-3.5" />
-                              <span>Detail</span>
+                              <span>Details</span>
                             </button>
                           </div>
                         </td>
@@ -1997,10 +1998,10 @@ export default function AdminDashboardPage() {
           <section className="bg-white border-2 border-[#18181B] rounded-2xl p-6 shadow-[4px_4px_0px_#18181B] space-y-6">
             <div className="pb-5 border-b-2 border-zinc-100">
               <h2 className="text-xl font-extrabold text-[#18181B]">
-                Manajemen Stok Voucher & Probabilitas RNG
+                Voucher Stock Management & RNG Probability
               </h2>
               <p className="text-xs text-zinc-500 mt-1">
-                Tambahkan kuota kode voucher baru kapan saja tanpa menghentikan operasional spinwheel
+                Add new voucher codes to quotas anytime without interrupting spinwheel operations
               </p>
             </div>
 
@@ -2020,7 +2021,7 @@ export default function AdminDashboardPage() {
                           p.available > 5 ? "bg-[#86EFAC]" : "bg-[#FCA5A5]"
                         }`}
                       >
-                        Sisa {p.available}
+                        {p.available} Left
                       </span>
                     </div>
 
@@ -2035,22 +2036,22 @@ export default function AdminDashboardPage() {
                   <div className="space-y-2 pt-3 border-t border-zinc-300 text-xs font-medium">
                     <div className="flex justify-between">
                       <span className="text-zinc-600">Total Pool:</span>
-                      <span className="font-extrabold">{p.total} voucher</span>
+                      <span className="font-extrabold">{p.total} vouchers</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-zinc-600">Assigned (Di User):</span>
+                      <span className="text-zinc-600">Assigned (Held by User):</span>
                       <span className="font-extrabold text-blue-700">
-                        {p.assigned} voucher
+                        {p.assigned} vouchers
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-zinc-600">Redeemed (Di Kasir):</span>
+                      <span className="text-zinc-600">Redeemed (At Cashier):</span>
                       <span className="font-extrabold text-emerald-700">
-                        {p.redeemed} voucher
+                        {p.redeemed} vouchers
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-zinc-600">Bobot RNG:</span>
+                      <span className="text-zinc-600">RNG Weight:</span>
                       <span className="font-extrabold">
                         {p.theoreticalShare}% (Weight {p.probabilityWeight})
                       </span>
@@ -2064,7 +2065,7 @@ export default function AdminDashboardPage() {
                       disabled={actionLoading === `topup-${p.id}`}
                       className="flex-1 py-2.5 rounded-xl bg-white hover:bg-[#FDE047] border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B] text-xs font-extrabold cursor-pointer"
                     >
-                      +10 Kuota
+                      +10 Quota
                     </button>
                     <button
                       type="button"
@@ -2072,7 +2073,7 @@ export default function AdminDashboardPage() {
                       disabled={actionLoading === `topup-${p.id}`}
                       className="flex-1 py-2.5 rounded-xl bg-[#18181B] hover:bg-zinc-800 text-white border-2 border-[#18181B] shadow-[2px_2px_0px_#C10230] text-xs font-extrabold cursor-pointer"
                     >
-                      +50 Kuota
+                      +50 Quota
                     </button>
                   </div>
                 </div>
@@ -2088,10 +2089,10 @@ export default function AdminDashboardPage() {
           <section className="bg-white border-2 border-[#18181B] rounded-2xl p-6 shadow-[4px_4px_0px_#18181B] space-y-6">
             <div className="pb-5 border-b-2 border-zinc-100">
               <h2 className="text-xl font-extrabold text-[#18181B]">
-                Deteksi Multi-Akun & IP Address Sama
+                Multi-Account & Shared IP Detection
               </h2>
               <p className="text-xs text-zinc-500 mt-1">
-                Memantau apabila ada 1 perangkat/jaringan yang mendaftar berkali-kali dengan nomor berbeda
+                Monitors whether single devices or networks register multiple accounts with different numbers
               </p>
             </div>
 
@@ -2099,10 +2100,10 @@ export default function AdminDashboardPage() {
               <div className="p-8 rounded-2xl bg-[#86EFAC]/40 border-2 border-[#18181B] text-center space-y-2">
                 <CheckCircle2 className="w-8 h-8 text-emerald-700 mx-auto" />
                 <h3 className="text-sm font-extrabold text-[#18181B]">
-                  Tidak Ada Indikasi Duplikasi IP
+                  No IP Duplication Detected
                 </h3>
                 <p className="text-xs text-zinc-600">
-                  Seluruh pendaftar berasal dari alamat IP yang wajar.
+                  All registrations originate from unique and standard IP addresses.
                 </p>
               </div>
             ) : (
@@ -2118,14 +2119,14 @@ export default function AdminDashboardPage() {
                           IP: {item.ip}
                         </span>
                         <span className="px-2.5 py-0.5 rounded bg-[#FCA5A5] border border-[#18181B] text-xs font-extrabold">
-                          {item.count} Akun Terkait
+                          {item.count} Linked Accounts
                         </span>
                       </div>
                       <p className="text-xs font-bold text-[#18181B] mt-2">
-                        Nama Customer: {item.names.join(", ")}
+                        Customer Names: {item.names.join(", ")}
                       </p>
                       <p className="text-xs text-zinc-600 mt-0.5">
-                        Email: {item.emails.join(" • ")}
+                        Emails: {item.emails.join(" • ")}
                       </p>
                     </div>
                     <button
@@ -2136,7 +2137,7 @@ export default function AdminDashboardPage() {
                       }}
                       className="px-4 py-2 rounded-xl bg-white hover:bg-[#FDE047] border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B] font-bold text-xs cursor-pointer"
                     >
-                      Lihat Customer
+                      View Customers
                     </button>
                   </div>
                 ))}
@@ -2165,7 +2166,7 @@ export default function AdminDashboardPage() {
                 autoFocus
                 value={cmdKQuery}
                 onChange={(e) => setCmdKQuery(e.target.value)}
-                placeholder="Ketik Nama Customer, No. WA, Email, atau Kode GC-..."
+                placeholder="Type Customer Name, WhatsApp, Email, or GC-... code"
                 className="w-full bg-transparent text-sm font-bold text-[#18181B] placeholder:text-zinc-400 focus:outline-none"
               />
               <button
@@ -2240,13 +2241,13 @@ export default function AdminDashboardPage() {
             <div className="flex items-start justify-between gap-4 border-b-2 border-zinc-100 pb-4">
               <div>
                 <span className="inline-block px-2 py-0.5 bg-[#FDE047] border border-[#18181B] rounded text-[10px] font-extrabold uppercase">
-                  Profil Customer
+                  Customer Profile
                 </span>
                 <h3 className="text-xl font-extrabold text-[#18181B] mt-1">
                   {selectedCustomer.fullName}
                 </h3>
                 <p className="text-xs text-zinc-500 mt-0.5">
-                  Terdaftar: {formatRelativeTime(selectedCustomer.registeredAt)} • IP:{" "}
+                  Registered: {formatRelativeTime(selectedCustomer.registeredAt)} • IP:{" "}
                   {selectedCustomer.ipAddress}
                 </p>
               </div>
@@ -2262,7 +2263,7 @@ export default function AdminDashboardPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div className="p-3.5 rounded-xl bg-[#FAF7F2] border-2 border-[#18181B]">
                 <div className="text-[11px] font-bold text-zinc-500">
-                  Nomor WhatsApp
+                  WhatsApp Number
                 </div>
                 <div className="font-mono text-sm font-extrabold text-[#18181B] mt-0.5">
                   {selectedCustomer.whatsapp}
@@ -2272,7 +2273,7 @@ export default function AdminDashboardPage() {
                     /\D/g,
                     ""
                   )}?text=${encodeURIComponent(
-                    `Halo ${selectedCustomer.fullName}, berikut informasi E-Voucher Gong cha Central Park Anda: ${
+                    `Hello ${selectedCustomer.fullName}, here is your Gong cha Central Park E-Voucher info: ${
                       selectedCustomer.voucher?.code || ""
                     } (${selectedCustomer.voucher?.prizeName || ""}).`
                   )}`}
@@ -2281,14 +2282,14 @@ export default function AdminDashboardPage() {
                   className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#86EFAC] border border-[#18181B] text-xs font-bold text-[#18181B]"
                 >
                   <MessageCircle className="w-3.5 h-3.5" />
-                  <span>Kirim WA</span>
+                  <span>Send WhatsApp</span>
                   <ExternalLink className="w-3 h-3" />
                 </a>
               </div>
 
               <div className="p-3.5 rounded-xl bg-[#FAF7F2] border-2 border-[#18181B]">
                 <div className="text-[11px] font-bold text-zinc-500">
-                  Alamat Email
+                  Email Address
                 </div>
                 <div className="text-xs font-extrabold text-[#18181B] truncate mt-0.5">
                   {selectedCustomer.email}
@@ -2303,8 +2304,8 @@ export default function AdminDashboardPage() {
                     <Mail className="w-3.5 h-3.5" />
                     <span>
                       {actionLoading === `email-${selectedCustomer.id}`
-                        ? "Mengirim..."
-                        : "Kirim Ulang Email"}
+                        ? "Sending..."
+                        : "Resend Email"}
                     </span>
                   </button>
                 )}
@@ -2361,12 +2362,12 @@ export default function AdminDashboardPage() {
                       {copiedCode === selectedCustomer.voucher.code ? (
                         <>
                           <Check className="w-3.5 h-3.5" />
-                          <span>Tersalin</span>
+                          <span>Copied</span>
                         </>
                       ) : (
                         <>
                           <Copy className="w-3.5 h-3.5" />
-                          <span>Salin</span>
+                          <span>Copy</span>
                         </>
                       )}
                     </button>
@@ -2378,10 +2379,10 @@ export default function AdminDashboardPage() {
                     <Ban className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                     <div>
                       <div className="text-red-700 font-extrabold text-xs">
-                        VOUCHER DIBATALKAN (REVOKED)
+                        VOUCHER REVOKED & INVALIDATED
                       </div>
                       <div className="text-[11px] text-zinc-600 font-medium mt-0.5">
-                        Kode voucher lama ini telah dihanguskan. Sistem telah membuat kode baru ke kuota hadiah. Customer ini diblokir dari spin ulang.
+                        This previous voucher code has been permanently cancelled. A fresh voucher was restored to available stock. This customer is blocked from re-spinning.
                       </div>
                     </div>
                   </div>
@@ -2399,7 +2400,7 @@ export default function AdminDashboardPage() {
                         className="w-full py-2.5 rounded-xl bg-[#86EFAC] hover:brightness-95 text-[#18181B] border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B] font-extrabold text-xs uppercase flex items-center justify-center gap-2 cursor-pointer"
                       >
                         <CheckCircle2 className="w-4 h-4" />
-                        <span>Tandai Sudah Redeem</span>
+                        <span>Mark as Redeemed</span>
                       </button>
                     ) : (
                       <button
@@ -2413,7 +2414,7 @@ export default function AdminDashboardPage() {
                         className="w-full py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-[#18181B] border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B] font-extrabold text-xs uppercase flex items-center justify-center gap-2 cursor-pointer"
                       >
                         <RotateCcw className="w-4 h-4" />
-                        <span>Batalkan Redeem (Kembalikan ke ASSIGNED)</span>
+                        <span>Revert to Unredeemed (ASSIGNED)</span>
                       </button>
                     )}
 
@@ -2427,8 +2428,8 @@ export default function AdminDashboardPage() {
                       <Ban className="w-4 h-4" />
                       <span>
                         {actionLoading === `revoke-${selectedCustomer.id}`
-                          ? "Memproses Revoke..."
-                          : "Revoke Voucher & Kembalikan ke Kuota"}
+                          ? "Processing Revocation..."
+                          : "Revoke Voucher & Return to Quota"}
                       </span>
                     </button>
                   </div>
@@ -2436,7 +2437,7 @@ export default function AdminDashboardPage() {
               </div>
             ) : (
               <div className="p-4 rounded-xl bg-[#FAF7F2] border-2 border-[#18181B] text-center text-xs font-semibold text-zinc-600">
-                Pengunjung ini belum memutar Spinwheel.
+                This guest has not spun the wheel yet.
               </div>
             )}
           </div>
@@ -2454,10 +2455,10 @@ export default function AdminDashboardPage() {
             </span>
             <div>
               <div className="font-extrabold text-sm text-[#FAF7F2]">
-                Customer Terpilih
+                Selected Customers
               </div>
               <div className="text-[11px] text-zinc-400">
-                Siap untuk kirim ulang email voucher
+                Ready to resend voucher tickets via email
               </div>
             </div>
           </div>
@@ -2468,7 +2469,7 @@ export default function AdminDashboardPage() {
               onClick={() => setSelectedCustomerIds(new Set())}
               className="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold transition-colors cursor-pointer"
             >
-              Batal
+              Cancel
             </button>
             <button
               type="button"
@@ -2476,7 +2477,7 @@ export default function AdminDashboardPage() {
               className="px-4 py-2 rounded-xl bg-[#C10230] hover:bg-[#821518] text-white border border-white/20 shadow-[2px_2px_0px_#FFFFFF] font-extrabold text-xs uppercase flex items-center gap-1.5 transition-all cursor-pointer"
             >
               <Send className="w-3.5 h-3.5" />
-              <span>Kirim Email ({selectedCustomerIds.size})</span>
+              <span>Send Email ({selectedCustomerIds.size})</span>
             </button>
           </div>
         </div>
@@ -2500,10 +2501,10 @@ export default function AdminDashboardPage() {
                   Broadcast / Resend Email
                 </span>
                 <h3 className="text-xl font-extrabold text-[#18181B] mt-1.5">
-                  Kirim Ulang Tiket E-Voucher
+                  Resend E-Voucher Tickets
                 </h3>
                 <p className="text-xs text-zinc-500 mt-0.5">
-                  Setiap customer akan menerima email dengan kartu tiket voucher dan QR code resmi
+                  Each customer will receive an official voucher pass email with embedded QR code
                 </p>
               </div>
               {!isSendingBatch && (
@@ -2521,7 +2522,7 @@ export default function AdminDashboardPage() {
             {batchMode !== "selected" && (
               <div className="space-y-3">
                 <label className="text-xs font-bold text-zinc-700 block">
-                  Pilih Target Penerima:
+                  Select Recipient Audience:
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <button
@@ -2535,10 +2536,10 @@ export default function AdminDashboardPage() {
                     }`}
                   >
                     <div className="font-extrabold text-xs text-[#18181B]">
-                      Hanya Belum Tukar
+                      Unredeemed Only
                     </div>
                     <div className="text-[11px] text-zinc-600 mt-0.5">
-                      Status ASSIGNED (Belum redeem)
+                      Status ASSIGNED (Not yet redeemed)
                     </div>
                   </button>
 
@@ -2553,17 +2554,17 @@ export default function AdminDashboardPage() {
                     }`}
                   >
                     <div className="font-extrabold text-xs text-[#18181B]">
-                      Semua Customer Aktif
+                      All Active Customers
                     </div>
                     <div className="text-[11px] text-zinc-600 mt-0.5">
-                      Termasuk yang sudah REDEEMED
+                      Including already REDEEMED
                     </div>
                   </button>
                 </div>
 
                 <div>
                   <label className="text-xs font-bold text-zinc-700 block mb-1">
-                    Filter Kategori Hadiah:
+                    Filter Prize Category:
                   </label>
                   <select
                     disabled={isSendingBatch}
@@ -2571,7 +2572,7 @@ export default function AdminDashboardPage() {
                     onChange={(e) => setBatchPrizeFilter(e.target.value)}
                     className="w-full h-10 px-3 rounded-xl bg-[#FAF7F2] border-2 border-[#18181B] text-xs font-bold text-[#18181B]"
                   >
-                    <option value="ALL">Semua Kategori Hadiah</option>
+                    <option value="ALL">All Prize Categories</option>
                     {prizeStats.map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.name}
@@ -2585,25 +2586,25 @@ export default function AdminDashboardPage() {
             {/* Target Summary Box */}
             <div className="p-4 rounded-xl bg-[#FAF7F2] border-2 border-[#18181B] space-y-2">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-zinc-600 font-medium">Mode Pengiriman:</span>
+                <span className="text-zinc-600 font-medium">Delivery Mode:</span>
                 <span className="font-extrabold text-[#18181B] uppercase">
                   {batchMode === "selected"
-                    ? `${selectedCustomerIds.size} Customer Terpilih`
+                    ? `${selectedCustomerIds.size} Selected Customers`
                     : batchMode === "unredeemed"
-                    ? "Broadcast: Belum Tukar Saja"
-                    : "Broadcast: Seluruh Customer"}
+                    ? "Broadcast: Unredeemed Only"
+                    : "Broadcast: All Customers"}
                 </span>
               </div>
               <div className="flex items-center justify-between text-xs">
-                <span className="text-zinc-600 font-medium">Perlindungan Revoke:</span>
+                <span className="text-zinc-600 font-medium">Revoke Protection:</span>
                 <span className="font-extrabold text-emerald-700">
-                  Aktif (Customer REVOKED otomatis dilewati)
+                  Active (REVOKED customers are automatically bypassed)
                 </span>
               </div>
               <div className="flex items-center justify-between text-xs">
                 <span className="text-zinc-600 font-medium">Rate Throttling:</span>
                 <span className="font-extrabold text-zinc-800">
-                  Aman (~120ms jeda per email untuk Resend)
+                  Safe (~120ms interval per email for Resend)
                 </span>
               </div>
             </div>
@@ -2613,10 +2614,10 @@ export default function AdminDashboardPage() {
               <div className="p-4 rounded-xl bg-[#FEF9C3] border-2 border-[#18181B] text-center space-y-2">
                 <RefreshCw className="w-5 h-5 text-[#C10230] animate-spin mx-auto" />
                 <div className="text-xs font-extrabold text-[#18181B]">
-                  Sedang Mengirim Email Batch...
+                  Sending Batch Emails...
                 </div>
                 <div className="text-[11px] text-zinc-600">
-                  Mohon jangan menutup jendela ini hingga proses selesai.
+                  Please keep this window open until dispatch completes.
                 </div>
               </div>
             )}
@@ -2628,17 +2629,17 @@ export default function AdminDashboardPage() {
                 }`}
               >
                 <div className="font-extrabold text-sm text-[#18181B]">
-                  Laporan Pengiriman Email:
+                  Email Dispatch Report:
                 </div>
                 <div className="text-zinc-700">
-                  • Total target: <strong>{batchResult.total}</strong> email
+                  • Total recipients: <strong>{batchResult.total}</strong> emails
                 </div>
                 <div className="text-emerald-700 font-bold">
-                  • Berhasil terkirim: <strong>{batchResult.sent}</strong> email
+                  • Successfully delivered: <strong>{batchResult.sent}</strong> emails
                 </div>
                 {batchResult.failed > 0 && (
                   <div className="text-red-700 font-bold">
-                    • Gagal: <strong>{batchResult.failed}</strong> email
+                    • Failed: <strong>{batchResult.failed}</strong> emails
                   </div>
                 )}
               </div>
@@ -2652,7 +2653,7 @@ export default function AdminDashboardPage() {
                 onClick={() => setBatchModalOpen(false)}
                 className="px-4 py-2.5 rounded-xl bg-[#FAF7F2] hover:bg-zinc-200 border-2 border-[#18181B] font-bold text-xs cursor-pointer"
               >
-                {batchResult ? "Tutup" : "Batal"}
+                {batchResult ? "Close" : "Cancel"}
               </button>
 
               {!batchResult && (
@@ -2667,7 +2668,7 @@ export default function AdminDashboardPage() {
                 >
                   <Send className="w-3.5 h-3.5" />
                   <span>
-                    {isSendingBatch ? "Mengirim..." : "Kirim Sekarang"}
+                    {isSendingBatch ? "Sending..." : "Send Now"}
                   </span>
                 </button>
               )}
