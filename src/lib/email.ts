@@ -4,7 +4,11 @@ import { getOrCreateVoucherQrCodeUrl } from "./voucher-qr";
 const resendApiKey = process.env.RESEND_API_KEY;
 const resendFromEmail = process.env.RESEND_FROM_EMAIL || "Gong cha Indonesia <voucher@gongcha-id.app>";
 
+const resendBackupApiKey = process.env.RESEND_BACKUP_API_KEY;
+const resendBackupFromEmail = process.env.RESEND_BACKUP_FROM_EMAIL || "Gong cha Indonesia <voucher@mail.gongcha-id.app>";
+
 export const resend = resendApiKey ? new Resend(resendApiKey) : null;
+export const resendBackup = resendBackupApiKey ? new Resend(resendBackupApiKey) : null;
 
 const GONGCHA_LOGO_URL = "https://vuffuslxeovrugjuwkfh.supabase.co/storage/v1/object/public/vouchers/assets/gongcha-logo.png";
 
@@ -215,7 +219,7 @@ export async function sendVoucherEmail({
         ]
       : undefined;
 
-    const { data, error } = await resend.emails.send({
+    let sendResult = await resend.emails.send({
       from: resendFromEmail,
       to,
       subject: `🎉 [Gong cha] Voucher Anda: ${prizeName} (${voucherCode})`,
@@ -223,13 +227,30 @@ export async function sendVoucherEmail({
       attachments,
     });
 
-    if (error) {
-      console.error("[Resend Email Error]:", error);
-      return { success: false, error: error.message };
+    // Fallback to backup Resend account if primary fails (daily limit / rate limit / quota exceeded)
+    if (sendResult.error && resendBackup) {
+      console.warn(`[Resend Primary Warning]: ${sendResult.error.message}. Attempting fallback to backup Resend account...`);
+      sendResult = await resendBackup.emails.send({
+        from: resendBackupFromEmail,
+        to,
+        subject: `🎉 [Gong cha] Voucher Anda: ${prizeName} (${voucherCode})`,
+        html,
+        attachments,
+      });
+
+      if (!sendResult.error) {
+        console.log(`[Resend Backup Sent] Successfully sent voucher to ${to} via Backup account, ID: ${sendResult.data?.id}`);
+        return { success: true, id: sendResult.data?.id };
+      }
     }
 
-    console.log(`[Resend Email Sent] Successfully sent voucher to ${to}, ID: ${data?.id}`);
-    return { success: true, id: data?.id };
+    if (sendResult.error) {
+      console.error("[Resend Email Error]:", sendResult.error);
+      return { success: false, error: sendResult.error.message };
+    }
+
+    console.log(`[Resend Email Sent] Successfully sent voucher to ${to}, ID: ${sendResult.data?.id}`);
+    return { success: true, id: sendResult.data?.id };
   } catch (err: any) {
     console.error("[Resend Email Exception]:", err);
     return { success: false, error: err?.message || "Unknown error" };
