@@ -6,6 +6,7 @@ import Link from "next/link";
 import {
   Camera,
   CameraOff,
+  SwitchCamera,
   Check,
   X,
   AlertCircle,
@@ -54,6 +55,7 @@ export default function CashierPortalPage() {
 
   // Scanner & Search State
   const [isScanning, setIsScanning] = useState(false);
+  const [cameraFacing, setCameraFacing] = useState<"environment" | "user">("environment");
   const [manualCode, setManualCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [historyFilter, setHistoryFilter] = useState("");
@@ -287,8 +289,12 @@ export default function CashierPortalPage() {
   };
 
   // Start QR Camera Scanner
-  const startScanner = async () => {
+  const startScanner = async (facing: "environment" | "user" = cameraFacing) => {
     try {
+      if (scannerRef.current && scannerRef.current.isScanning) {
+        await scannerRef.current.stop();
+      }
+
       if (!scannerRef.current) {
         scannerRef.current = new Html5Qrcode("reader");
       }
@@ -296,10 +302,16 @@ export default function CashierPortalPage() {
       setIsScanning(true);
 
       await scannerRef.current.start(
-        { facingMode: "environment" },
+        { facingMode: facing },
         {
           fps: 20,
-          qrbox: { width: 240, height: 240 },
+          qrbox: (viewfinderWidth, viewfinderHeight) => {
+            const edge = Math.min(viewfinderWidth, viewfinderHeight);
+            // 1:1 crisp square box across devices (82% of shortest edge, minimum 200px)
+            const boxSize = Math.max(200, Math.floor(edge * 0.82));
+            return { width: boxSize, height: boxSize };
+          },
+          aspectRatio: 1.0,
         },
         (decodedText) => {
           processVoucherCode(decodedText);
@@ -310,6 +322,14 @@ export default function CashierPortalPage() {
       console.error("Camera start error:", err);
       setIsScanning(false);
       alert("Cannot access camera. Please ensure camera permissions are granted.");
+    }
+  };
+
+  const toggleCameraFacing = async () => {
+    const nextFacing = cameraFacing === "environment" ? "user" : "environment";
+    setCameraFacing(nextFacing);
+    if (isScanning) {
+      await startScanner(nextFacing);
     }
   };
 
@@ -683,29 +703,41 @@ export default function CashierPortalPage() {
             <div className="mb-5">
               <div
                 id="reader"
-                className={`w-full overflow-hidden rounded-xl border-2 border-[#18181B] bg-zinc-950 ${
-                  isScanning ? "block aspect-square max-h-[290px]" : "hidden"
+                className={`w-full overflow-hidden rounded-xl border-2 border-[#18181B] bg-zinc-950 aspect-square ${
+                  isScanning ? "block" : "hidden"
                 }`}
               />
 
               {!isScanning ? (
                 <button
                   type="button"
-                  onClick={startScanner}
+                  onClick={() => startScanner()}
                   className="w-full py-3.5 px-4 bg-[#C10230] hover:bg-[#a30228] active:translate-x-[1px] active:translate-y-[1px] text-white font-extrabold text-sm rounded-xl border-2 border-[#18181B] shadow-[3px_3px_0px_#18181B] active:shadow-none transition-all cursor-pointer flex items-center justify-center gap-2"
                 >
                   <Camera className="w-4 h-4" />
                   <span>Open QR Camera Scanner</span>
                 </button>
               ) : (
-                <button
-                  type="button"
-                  onClick={stopScanner}
-                  className="w-full py-2.5 px-4 mt-3 bg-[#FAF7F2] hover:bg-zinc-200 text-[#18181B] font-extrabold text-xs rounded-xl border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B] transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                >
-                  <CameraOff className="w-4 h-4" />
-                  <span>Turn Off Camera</span>
-                </button>
+                <div className="flex gap-2.5 mt-3">
+                  <button
+                    type="button"
+                    onClick={toggleCameraFacing}
+                    className="flex-1 py-2.5 px-3 bg-[#FEF08A] hover:bg-[#FDE047] text-[#18181B] font-extrabold text-xs rounded-xl border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                    title="Switch between front and back camera"
+                  >
+                    <SwitchCamera className="w-4 h-4 text-[#18181B]" />
+                    <span>Flip Kamera ({cameraFacing === "environment" ? "Belakang" : "Depan"})</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={stopScanner}
+                    className="py-2.5 px-3.5 bg-[#FAF7F2] hover:bg-zinc-200 text-[#18181B] font-extrabold text-xs rounded-xl border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <CameraOff className="w-4 h-4" />
+                    <span>Matikan</span>
+                  </button>
+                </div>
               )}
             </div>
 
